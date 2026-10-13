@@ -1,0 +1,83 @@
+/*
+ * Design tokens for the Pure Insights Command Center.
+ * Inspired by the Everpure website's colour palette and shape language (see docs/design-system.md).
+ * No Everpure logo, imagery or proprietary font is used. Components must read these variables and never hard-code colours.
+ *
+ * Contrast (WCAG, measured): --pi-text on --pi-canvas 13.2:1 | --pi-text-muted on --pi-canvas 5.4:1
+ * --pi-on-brand on --pi-brand 5.2:1 | --pi-brand-strong on --pi-canvas 5.2:1.
+ * White text on --pi-brand is only 2.8:1 and must not be used.
+ */
+
+:root {
+  /* Brand */
+  --pi-brand: #ff7023;
+  --pi-brand-hover: #ff8848;
+  --pi-brand-pressed: #d55d1d;
+  --pi-brand-strong: #aa4b17; /* orange used as TEXT or an icon on light surfaces */
+  --pi-brand-tint: #ffeadd;
+  --pi-on-brand: #2d2a27;
+  --pi-brand-gradient: linear-gradient(180deg, #ff7023 0%, #d55d1d 100%);
+
+  /* Surfaces */
+  --pi-canvas: #f5f5f3; /* page background */
+  --pi-surface: #ffffff; /* cards and the side menu */
+  --pi-surface-sunken: #f1f0ed; /* hover rows, tracks, quiet fills */
+  --pi-dark: #2d2a27; /* top bar, sidebar, dark sections */
+  --pi-dark-gradient: linear-gradient(180deg, #262321 0%, #0f0e0d 100%);
+  --pi-on-dark: #fff5e3;
+
+  /* Text */
+  --pi-text: #2d2a27;
+  --pi-text-muted: #5f5b55;
+  --pi-text-on-dark-muted: #d0c8ba;
+
+  /* Borders */
+  --pi-border: #e8e5e0;
+  --pi-border-strong: #cdc8bf;
+  --pi-focus-ring: #aa4b17;
+
+  /* Status (each has a strong text colour and a light background; pairs are >= 5.9:1) */
+  --pi-success: #3d7307;
+  --pi-success-bg: #e4f1d9;
+  --pi-warning: #7a5a08;
+  --pi-warning-bg: #fff9d2;
+  --pi-danger: #932254;
+  --pi-danger-bg: #ffe6e1;
+  --pi-info: #065f90;
+  --pi-info-bg: #cefef4;
+
+  /* Alert severity (Phase 4 maps latency / failure tiers onto these) */
+  --pi-sev-low: var(--pi-info);
+  --pi-sev-medium: var(--pi-warning);
+  --pi-sev-high: var(--pi-brand-strong);
+  --pi-sev-critical: var(--pi-danger);
+
+  /* Shape */
+  --pi-radius-sm: 8px;
+  --pi-radius-md: 12px;
+  --pi-radius-card: 14px;
+  --pi-radius-pill: 26px;
+
+  /* Type */
+  --pi-font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --pi-font-mono: 'Space Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --pi-font-display: var(--pi-font-body);
+  --pi-text-xs: 12px;
+  --pi-text-sm: 14px;
+  --pi-text-base: 16px;
+  --pi-text-lg: 18px;
+  --pi-text-xl: 24px;
+  --pi-text-kpi: 36px;
+
+  /* Spacing (4px scale) */
+  --pi-space-1: 4px;
+  --pi-space-2: 8px;
+  --pi-space-3: 12px;
+  --pi-space-4: 16px;
+  --pi-space-6: 24px;
+  --pi-space-8: 32px;
+  --pi-space-12: 48px;
+
+  /* Touch target minimum */
+  --pi-target: 44px;
+}
