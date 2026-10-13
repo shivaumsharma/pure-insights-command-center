@@ -47,6 +47,7 @@ so treat dollar totals as illustrative**.
 | `GET /api/costs/reconciliation` | admin | Checks R1-R8 with `summary: { pass, fail, info }` |
 | `GET /api/costs/variance` | admin | Attributed vs CSV-claimed credits per report; `status` filter |
 | `GET /api/costs/aws-mismatch` | admin | Observations whose AWS cost does not fit their views; `type` filter |
+| `GET /api/costs/aws-usage` | admin | **Every** reading's views and hosting cost with its flag (`mismatch_type`, null when within the band), unpaged, for the usage-against-cost chart. `meta` has `fleet_aws_per_view` (total hosting cost over total views, readings with views only) and `mismatch_ratio` (3) |
 | `GET /api/orphans` | admin | Reports with no current owner, costliest first, plus `meta.orphaned_spend_usd` |
 | `PUT /api/reports/:id/owner` | admin | Body `{ "email" }`. Assigns an owner; recorded in the audit trail |
 | `DELETE /api/reports/:id/owner` | admin | Removes the assignment (back to the owner on the latest observation) |

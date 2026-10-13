@@ -399,7 +399,7 @@ The README said headline numbers had been "recomputed independently in Python". 
 a reviewer could not reproduce the claim: an evidence-honesty gap. `validation/validate.py` fixes it. It reads the **raw CSV** and, with its own
 code (standard library only, nothing shared with the JavaScript or the SQL), re-derives the cleaning, every alert, the credit attribution, cost per
 view, the variance check, the hosting-cost flags and the rule-based explanations, and compares each with what the app produced (the real alert
-engine via `scripts/dump-app-results.mjs`, and the SQL suite's output files). `npm run validate` writes `validation/REPORT.md` (63 checks, all
+engine via `scripts/dump-app-results.mjs`, and the SQL suite's output files). `npm run validate` writes `validation/REPORT.md` (68 checks, all
 passing) and exits 1 on any difference. It also checks every number the README quotes, so a stale README fails the run. It runs in CI.
 
 It is not a new feature: it is the evidence for claims the project already made, and it is the job description's own task (rerun the analytics
@@ -460,6 +460,25 @@ each caught by this check on its own with a message that names the problem.
 are right. The parser is lenient: it accepted an empty `PARTITION BY`, which is not valid, so a pass means "no typos, mismatches or malformed structure
 that the parser can see", not "valid on Snowflake". The honest claim is: written in a portable subset, tested on SQLite with hand-worked fixtures,
 re-derived independently in Python, checked statically as Snowflake SQL, and never run on Snowflake.
+
+### D45. Showing the hosting-cost discrepancy, and explaining the checks in plain words
+Two things the owner asked for after looking at the Costs page.
+- **A chart for the hosting-cost discrepancy.** The brief names "discrepancies between active user counts and AWS hosting compute costs", and the table
+  of flagged readings did not show the shape of it. The Costs page now plots every reading (views across, hosting cost up) with the fleet average cost per
+  view as a solid line and the 3x and 1/3 lines as dashed ones, flagged readings as diamonds. It needs every reading, not a page of them, so there is
+  one new admin endpoint, `GET /api/costs/aws-usage` (documented in the API spec; a test fails if the spec and the routes disagree). The flags are the SQL's
+  own; only the fleet rate is recomputed in the route, and a test shows it is the rate script 14 used. The Python validator re-derives the rate and
+  every point. "Active users" are still approximated by monthly active views.
+- **Each reconciliation check says what it is and why it exists.** The page showed the SQL's terse wording ("Attributed = metered credits in every
+  warehouse-hour with queries"), which read as eight similar checks. Each now leads with a plain name and a one-sentence reason (`lib/checkCopy.js`), and a test
+  fails if the SQL defines a check the page does not explain. They are my own quality checks on the attribution, not something the brief asks for: R1 and R8 are
+  the ones that matter, R2 to R5 each guard against a different way a join could silently lose rows, R6 repeats the cleaning step, and R7 is circular.
+
+Also recorded here: the brief says "anomaly filtering", so I tested statistical detection on the raw file. Every numeric column is spread evenly across its
+range and has **no** outlier by the 1.5x IQR or 3-standard-deviation tests, and the 24 negative credit values would not be flagged by either. They are caught by
+a rule because credits cannot be negative (finding F13).
+Checked: 17 deliberate breakages of the new code (scales, line clipping, mark size, legend, plain-language copy, admin gating, counts, the endpoint, its
+paging, its role check, its documentation); one survived at first because the test fixture was symmetric, and was fixed.
 
 ## Open assumptions (to confirm in later phases)
 - `sql/00_schema.sql` and `sql/10-14*.sql` have not been run against a live Snowflake account.

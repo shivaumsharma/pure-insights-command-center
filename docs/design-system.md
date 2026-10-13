@@ -51,7 +51,7 @@ arithmetic in `lib/chartMath.js` and `lib/summaries.js`, where it is unit-tested
 | Ring (`Donut`) | Latest refresh status; credits vs hosting; spend with and without an owner | Overview | all; the two spend rings need cost access |
 | Bars (`StackBars`, `BarList`) | Open alerts by severity; biggest spenders (idle part marked); cost per view and idle spend rankings; rows used vs set aside and why; AI verdicts by writer; how breaching readings became alerts | Overview, Alerts, Costs, Data quality, AI review | by the page's own role rules |
 | Line (`LineChart`) | Load time with the 15 s limit and failed refreshes marked; views; peak concurrent users | Report detail | all |
-| Scatter | Claimed against implied credits, with the "they agree" diagonal | Costs | admin |
+| Scatter | Claimed against implied credits, with the "they agree" diagonal; hosting cost against active views for every reading, with the fleet average and a 3x band (own scale per axis, marks drawn smaller when there are many) | Costs | admin |
 | Fleet map | One tile per report: latest refresh, and a dot when its latest load time is over the limit | Overview | all (an owner sees only their reports) |
 
 Rules every chart follows:

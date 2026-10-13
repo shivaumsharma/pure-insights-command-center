@@ -88,7 +88,7 @@ early look, not page by page. The alert-noise totals grow because the replay loo
 
 ## 13. How do you know your numbers are right?
 I do not just trust them; a separate Python program, sharing no code with the app, re-derives them from the raw CSV and compares item by item: the
-cleaning, every one of the alerts, the credit attribution, the cost per view, the hosting-cost flags and the explanations (`npm run validate`, 63
+cleaning, every one of the alerts, the credit attribution, the cost per view, the hosting-cost flags and the explanations (`npm run validate`, 68
 checks). I broke the app in 13 ways to check the validator fails when it should. It also checks every number my README quotes.
 *Be honest about:* I wrote both sides from the same written rules, so it catches slips and drift, not a wrong reading of the brief; and the SQL was
 compared through a SQLite stand-in, never on Snowflake (`docs/snowflake-run.md` is how to do that).
@@ -97,6 +97,13 @@ compared through a SQLite stand-in, never on Snowflake (`docs/snowflake-run.md` 
 ## 14. The data has dollars. Why not rupees?
 The cost column in the file is `aws_hosting_cost_usd`, so the data is in dollars and I kept it that way. A conversion would need an exchange rate the data
 does not contain. Snowflake credits are a unit, converted at a placeholder $3 each, and every page that shows dollars says so (decision D42).
+
+## 15. Why not statistical anomaly detection for the bad values?
+The brief says "anomaly filtering", so I tested it. I ran the standard tests (values beyond 1.5 times the interquartile range, and beyond 3 standard
+deviations) on all six numeric columns of the raw file: **no column has a single outlier**, because every column is spread evenly across its range. The 24
+negative credit values (from -13.6 to -0.8) are not statistical outliers either: they sit well inside the fences. They are wrong because credits used
+cannot be negative, which is a rule, not a statistical fact, so a rule catches them and statistics would not. On real data I would add a flag-only
+statistical screen as well, never an automatic removal. *Check:* `validation/REPORT.md` section 1, finding F13.
 
 ## Hard follow-ups to be ready for
 
