@@ -55,6 +55,7 @@ a separate Python program re-derives them from the raw CSV and the two are compa
   <tr><th>Snowflake SQL suite (deliverable 3)</th><td>Section 5 below; the scripts are in <code>sql/</code> (<code>00_schema</code>, <code>10</code> to <code>14</code>), explained in <code>docs/cost-allocation.md</code>.</td></tr>
   <tr><th>Run it (Node 22+)</th><td><code>npm install</code> &nbsp; <code>npm run web:install</code> &nbsp; <code>npm run data:build</code> &nbsp; <code>npm run web:build</code> &nbsp; <code>npm start</code> &rarr; http://localhost:3101.
   Demo sign-ins (admin, two owners, a viewer, synthetic data only) are in <code>backend/config/demo-users.json</code>. <code>npm run test:all</code> runs 497 tests; <code>npm run validate</code> runs the independent Python check.</td></tr>
+  <tr><th>Scope</th><td><b>Core: the three deliverables.</b> Two extras, kept small and labelled: explanations of alerts that are checked against the data (the role is about validating AI output) and charts on data the app already has. Nothing else was added.</td></tr>
   <tr><th>Honest status</th><td><span class="ok">Done and tested:</span> data cleaning, SQL suite, REST API with three roles, real-time alerts over WebSocket, React dashboard, independent validation, CI green on GitHub.
   <span class="no">Not done:</span> the SQL has <b>never been run on a real Snowflake account</b> (the trial had expired). It runs on a local SQLite stand-in, and it is parsed and name-checked as Snowflake SQL. See section 9.</td></tr>
 </table>
@@ -63,6 +64,13 @@ a separate Python program re-derives them from the raw CSV and the two are compa
   <div><img src="../docs/img/overview.jpg" alt="Overview page"><div class="cap">Overview: fleet health, open alerts, and a map of every report.</div></div>
   <div><img src="../docs/img/report-detail.jpg" alt="Report detail page"><div class="cap">A report's load time with its failed refreshes marked.</div></div>
 </div>
+
+<h2>Where I went deep</h2>
+<ul>
+  <li><b>Cost attribution you can prove.</b> Each warehouse-hour's credits are split across its queries by elapsed-time share, and a check confirms nothing is created or lost in any hour (R1). The method is tested on hand-worked fixtures and re-derived in a second language that shares no code with the SQL.</li>
+  <li><b>Alerts that behave under real conditions.</b> With 74% of readings over the limit, a naive rule alerts on everything, so there is a lifecycle (trigger, escalate, repeat after a cooldown, resolve). A reconnecting client gets exactly the alerts it missed, and a server restart is detected rather than silently mis-replayed. All 1,181 alert events match an independent implementation.</li>
+  <li><b>Finding problems and routing them.</b> Thirteen documented findings, each with evidence, impact, an owner to route it to and a next step. Including the awkward ones: statistical anomaly detection flags nothing in this data, and the "credits mismatch" is a property of the synthetic data, not a billing error.</li>
+</ul>
 
 <h2>1. Where each requirement is met</h2>
 <table>
@@ -182,9 +190,9 @@ JOIN sim_account_usage.warehouse_metering_history m
 </table>
 <p>The validator was written by the same author as the app, from the same written rules, so it catches slips and drift, not a wrong reading of the brief.</p>
 
-<h2>8. Beyond the brief: "Explain this alert", with the AI checked</h2>
-<p>Because the role is about validating AI output, each alert can be explained by a model (hosted, or a free local one through Ollama) or by plain rules. The model is not trusted: it receives a numbered evidence pack and must cite which fact supports each claim and the value it read. A checker compares every citation with the real data, tests each cause against a data rule, and rejects numbers not in the evidence. Verdicts: <b>passed</b> (shown, with a "how it was checked" list), <b>could not be verified</b> (held for an admin to approve or dismiss), or <b>contradicts the data</b> (withheld). When the AI's answer is held, everyone else sees the rule-based answer for the same alert if it passed the same checks, labelled as rule-based.</p>
-<p><b>Measured, small sample:</b> four free local models on 10 alerts each passed the checks 6 (Llama 3.1 8B), 3 (Gemma 2 9B), 0 (Qwen 2.5 7B) and 0 (Qwen 2.5 1.5B) times; the rule-based control passed 9 of the same 10. This is a small, untuned sample, not a claim about AI in general, and no hosted model was run.</p>
+<h2>8. One extra, kept separate: "Explain this alert", with the AI checked</h2>
+<p>Because the role is about validating AI output, an alert can be explained by a model (hosted, or a free local one) or by plain rules, and the model is never trusted. It must cite a numbered piece of evidence for each claim; a checker compares every citation with the real data and rejects numbers that are not in the evidence. Answers that pass are shown with a "how it was checked" list, ones that cannot be verified wait for an admin to approve or dismiss, and ones that contradict the data are withheld. If the AI's answer is held, everyone else sees the rule-based answer for the same alert when that passed the same checks.</p>
+<p><b>Measured, small sample:</b> four free local models on 10 alerts each passed the checks 6, 3, 0 and 0 times; the rule-based control passed 9 of 10. This is not a claim about AI in general, and no hosted model was run.</p>
 
 <h2>9. Limits, and what I would do next</h2>
 <ul>
@@ -195,7 +203,7 @@ JOIN sim_account_usage.warehouse_metering_history m
   <li><b>Next:</b> run the SQL on a real account and compare; add a flag-only statistical screen beside the rules for real data; add a stored history so alerts survive a restart.</li>
 </ul>
 <h3>How it was built</h3>
-<p>The code, tests and docs were written with Claude Code (an AI assistant) at my direction, and the repository says so (<code>docs/AUTHORSHIP.md</code>). The code was developed over several sessions before the repository existed, so the commit history groups finished work by area rather than replaying it; every commit carries the date it was really made, and the decision log is the better record of why each choice was made.</p>
+<p>I built this with Claude Code (an AI assistant): I set the direction and the rules, and reviewed, tested and independently validated what it produced. That is stated in <code>docs/AUTHORSHIP.md</code>. The code was developed over several sessions before the repository existed, so the commit history groups finished work by area; the decision log is the better record of why each choice was made.</p>
 
 <footer>Pure Insights Command Center &middot; github.com/shivaumsharma/pure-insights-command-center &middot; Built on synthetic data. Not an official Everpure or Pure Storage product.</footer>
 </body>

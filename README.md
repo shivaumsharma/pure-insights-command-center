@@ -19,7 +19,7 @@ Storage product; the palette is inspired by their website and the layout by a pu
 | Real-time alerting over WebSocket, with replay on reconnect | done |
 | React dashboard: overview, fleet map, reports, alerts, costs, orphans, data quality | done, with charts |
 | Independent validation in Python: 68 checks (every headline number, plus the SQL checked as Snowflake SQL) | done, passing ([report](validation/REPORT.md)) |
-| "Explain this alert": AI or rule-written, checked against the data, held for a person if unverifiable | done; run on four free local models (10 alerts each), **never on a hosted one** |
+| Extra: "Explain this alert": AI or rule-written, checked against the data, held for a person if unverifiable | done; run on four free local models (10 alerts each), **never on a hosted one** |
 
 CI on GitHub runs on a clean Ubuntu machine and passes all three jobs: the data-drift check, 240 backend tests, the
 Python validation, 257 frontend tests, the build and both end-to-end smoke tests.
