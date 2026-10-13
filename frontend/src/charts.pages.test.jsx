@@ -100,7 +100,48 @@ describe('costs page charts', () => {
     'GET /api/costs/reconciliation': { data: [], summary: { pass: 0, fail: 0, info: 0 }, meta: META },
     'GET /api/costs/variance': { ...page(variance), meta: META },
     'GET /api/costs/aws-mismatch': { ...page([]), meta: META },
+    'GET /api/costs/aws-usage': {
+      data: [
+        { observation_id: 'RPT_1:001', report_id: 'RPT_1', views: 1000, aws_cost_usd: 300, mismatch_type: null },
+        { observation_id: 'RPT_1:002', report_id: 'RPT_1', views: 100, aws_cost_usd: 400, mismatch_type: 'COST_HIGH_FOR_USAGE' },
+        { observation_id: 'RPT_1:003', report_id: 'RPT_1', views: 0, aws_cost_usd: 50, mismatch_type: 'ZERO_VIEWS_WITH_COST' },
+        { observation_id: 'RPT_2:001', report_id: 'RPT_2', views: 800, aws_cost_usd: 250, mismatch_type: null },
+        { observation_id: 'RPT_2:002', report_id: 'RPT_2', views: 600, aws_cost_usd: 190, mismatch_type: null },
+      ],
+      meta: { fleet_aws_per_view: 0.3, mismatch_ratio: 3, ...META },
+    },
   };
+
+  it('admin gets the hosting-cost-against-views chart, with the average, the band and the count outside it, in words', async () => {
+    renderApp({ role: 'admin', path: '/costs', routes: adminRoutes });
+    const chart = await screen.findByRole('img', { name: 'Hosting cost against active views for 5 readings; 2 cost more than 3 times, or less than 1/3 of, what their views predict' });
+    expect(within(chart.closest('.chart-box')).getByText('fleet average')).toBeInTheDocument();
+    expect(within(chart.closest('.chart-box')).getByText('3x the average')).toBeInTheDocument();
+    expect(within(chart.closest('.chart-box')).getByText('1/3 of the average')).toBeInTheDocument();
+    expect(within(chart.closest('.chart-box')).getByText('Outside it (2)')).toBeInTheDocument();
+    expect(screen.getByText(/The fleet averages \$0\.30 of hosting per view/)).toBeInTheDocument();
+    expect(screen.getByText(/2 of 5 readings fall outside/)).toBeInTheDocument();
+    expect(screen.getByText(/Active users are approximated by monthly active views/)).toBeInTheDocument();
+  });
+
+  it('each reconciliation check leads with its name, then why the check exists', async () => {
+    renderApp({
+      role: 'admin', path: '/costs',
+      routes: { ...adminRoutes, 'GET /api/costs/reconciliation': { data: [
+        { check_id: 'R1', description: 'sql wording', expected_value: 0, actual_value: 0, status: 'PASS', note: 'sql note' },
+        { check_id: 'R8', description: 'sql wording', expected_value: 0, actual_value: 64, status: 'FAIL', note: 'sql note' },
+        { check_id: 'R42', description: 'A check this page does not know', expected_value: 0, actual_value: 0, status: 'PASS', note: 'what it is for' },
+      ], summary: { pass: 2, fail: 1, info: 0 }, meta: META } },
+    });
+    const table = await screen.findByRole('table', { name: 'Reconciliation checks' });
+    const r1 = within(table).getByText('Credits add back up').closest('td');
+    expect(r1).toHaveTextContent('R1');
+    expect(r1.querySelectorAll('div')[1]).toHaveTextContent(/split between the reports that ran in it/);
+    expect(within(table).getByText("Each report's credits match its workload")).toBeInTheDocument();
+    expect(within(table).queryByText('sql wording')).toBeNull(); // the page's words, not the SQL's, when it has them
+    expect(within(table).getByText('A check this page does not know')).toBeInTheDocument(); // an unknown id keeps the SQL's words
+    expect(within(table).getByText('what it is for')).toBeInTheDocument();
+  });
 
   it('admin gets the claimed-against-implied plot, counting the reports that disagree', async () => {
     renderApp({ role: 'admin', path: '/costs', routes: adminRoutes });
@@ -122,7 +163,8 @@ describe('costs page charts', () => {
     const { fetchImpl } = renderApp({ role: 'owner', path: '/costs', routes: costRoutes });
     await screen.findByRole('list', { name: 'Ten highest costs per view' });
     expect(screen.queryByText('Claimed against implied credits')).toBeNull();
-    expect(fetchImpl.calls.map((c) => c.path).filter((p) => /reconciliation|variance|aws-mismatch/.test(p))).toEqual([]);
+    expect(fetchImpl.calls.map((c) => c.path).filter((p) => /reconciliation|variance|aws-mismatch|aws-usage/.test(p))).toEqual([]);
+    expect(screen.queryByText('Hosting cost against active views')).toBeNull();
   });
 
   it('says so when no report had idle spend', async () => {

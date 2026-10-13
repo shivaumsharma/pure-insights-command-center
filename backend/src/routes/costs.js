@@ -53,5 +53,11 @@ export function costRoutes({ store }) {
     res.json({ ...paginate(rows, page), meta: store.costMeta() });
   });
 
+  // Every reading (about 2,000), not a page: the chart needs the whole cloud of points, not just the flagged ones.
+  router.get('/costs/aws-usage', requireRole('admin'), (req, res) => {
+    const { readings, ...rest } = store.awsUsage();
+    res.json({ data: readings, meta: { ...rest, ...store.costMeta() } });
+  });
+
   return router;
 }

@@ -17,6 +17,8 @@ re-derives:
 | Cost | credits split over each warehouse-hour by elapsed-time share, cost per report and per view, idle spend, variance against the CSV | the SQL suite's output (`data/processed/cost_*.csv`) |
 | Hosting cost | readings whose AWS cost is 3x off what their views predict | `cost_aws_mismatch.csv` |
 | Explanations | which causes the data supports for each alert, using only readings up to that alert | the app's rule-based explainer |
+| Chart data | the fleet's hosting cost per view and every reading's views, hosting cost and flag, behind the Costs-page chart | `GET /api/costs/aws-usage` (via `scripts/dump-app-results.mjs`) |
+| Outliers | for each numeric column of the raw file, values beyond 1.5 x IQR or 3 standard deviations (none), and whether the negative credits would be flagged (no) | stated in the findings log |
 | README | every number the README quotes | the figures above |
 | SQL, statically | the six scripts parsed as **Snowflake** SQL; every table and column they use looked up in the schema; each generated CSV matched to its table, column for column and in order | `sql/` and `data/processed/` (needs `pip install -r validation/requirements.txt`; skipped with a note if absent) |
 

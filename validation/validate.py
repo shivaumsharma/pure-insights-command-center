@@ -119,6 +119,29 @@ def clean_raw():
     return clean, aside, len(body)
 
 
+def quartile(values, p):
+    s = sorted(values)
+    k = (len(s) - 1) * p
+    lo, hi = math.floor(k), math.ceil(k)
+    return s[lo] + (s[hi] - s[lo]) * (k - lo)
+
+
+def statistical_outliers():
+    """For each numeric column of the RAW file: values beyond 1.5 x IQR of the quartiles, and values over 3 standard deviations from the mean."""
+    with open(RAW, newline='', encoding='utf-8') as f:
+        rows = list(csv.DictReader(f))
+    result = {}
+    for col, _ in NUMERIC:
+        values = [float(r[col]) for r in rows if NUM_RE.match(r[col].strip())]
+        q1, q3 = quartile(values, 0.25), quartile(values, 0.75)
+        low, high = q1 - 1.5 * (q3 - q1), q3 + 1.5 * (q3 - q1)
+        mean = sum(values) / len(values)
+        sd = math.sqrt(sum((v - mean) ** 2 for v in values) / len(values))
+        result[col] = {'iqr': sum(1 for v in values if v < low or v > high), 'z3': sum(1 for v in values if sd and abs(v - mean) / sd > 3),
+                       'negatives_flagged': sum(1 for v in values if v < 0 and v < low)}
+    return result
+
+
 # =========================================================== 2. alerts
 def latency_severity(sec):
     return 'critical' if sec >= LATENCY_CEILING else 'high' if sec > 35 else 'medium' if sec > 25 else 'low' if sec > LATENCY_LIMIT else None
@@ -228,7 +251,7 @@ def aws_mismatches(clean):
                 flagged[o['observation_id']] = 'COST_HIGH_FOR_USAGE'
             elif ratio <= 1 / AWS_RATIO:
                 flagged[o['observation_id']] = 'COST_LOW_FOR_USAGE'
-    return flagged
+    return flagged, per_view
 
 
 # =========================================================== 5. explanations
@@ -321,7 +344,7 @@ def main():
     clean, aside, rows_in = clean_raw()
     alerts = run_alerts(clean)
     costs = attribute_costs(clean)
-    mismatches = aws_mismatches(clean)
+    mismatches, aws_rate = aws_mismatches(clean)
 
     try:
         node = subprocess.run(['node', '--disable-warning=ExperimentalWarning', str(ROOT / 'scripts' / 'dump-app-results.mjs')],
@@ -368,6 +391,11 @@ def main():
     R.check('readings over 15 s', sum(1 for o in clean if o['load'] > LATENCY_LIMIT), dq['latency']['breaches'])
     R.check('readings at the 55 s ceiling', sum(1 for o in clean if o['load'] >= LATENCY_CEILING), dq['latency']['at_ceiling'])
 
+    outliers = statistical_outliers()
+    R.check('numeric columns with a value beyond 1.5 x IQR (a statistical outlier)', [c for c, o in outliers.items() if o['iqr']], [])
+    R.check('numeric columns with a value more than 3 standard deviations from the mean', [c for c, o in outliers.items() if o['z3']], [])
+    R.check('negative credit values a statistical outlier test would flag (a rule catches them, statistics does not)', outliers['snowflake_credits_consumed']['negatives_flagged'], 0)
+
     # ---- 2 alerts
     R.section('2. Alerts', 'Every alert, compared one by one in order. The app side is the real alert engine run over the processed data.')
     mine = [[a[0], iso(a[1]), a[2], a[3], a[4], a[5], a[6]] for a in alerts]
@@ -409,6 +437,11 @@ def main():
     R.section('4. Hosting cost that does not fit usage', 'Readings whose AWS cost is far from what their views predict (3x either way, or cost with no views).')
     R.check('readings flagged', len(mismatches), len(app_aws))
     R.check('the same readings, with the same reason', mismatches, app_aws)
+    chart = app['awsUsage']
+    R.check('the chart\'s fleet hosting cost per view (the average line)', round(aws_rate, 9), round(chart['rate'], 9))
+    mine_points = {o['observation_id']: [o['views'], o['aws'], mismatches.get(o['observation_id'])] for o in clean}
+    app_points = {r[0]: [r[1], r[2], r[3]] for r in chart['readings']}
+    R.check('the chart\'s points: every reading\'s views, hosting cost and flag', f'{sum(1 for k, v in mine_points.items() if app_points.get(k) != v)} differ', '0 differ' if len(mine_points) == len(app_points) else f'{len(app_points)} points')
 
     # ---- 5 explanations
     mine_causes = explain(clean, alerts)

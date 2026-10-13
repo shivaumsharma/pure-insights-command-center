@@ -28,8 +28,10 @@ try {
     explanations[alert.event_id] = suggestion.causes.map((c) => c.kind).sort();
   }
 
+  const usage = store.awsUsage();
   process.stdout.write(JSON.stringify({
     readings: total,
+    awsUsage: { rate: usage.fleet_aws_per_view, ratio: usage.mismatch_ratio, readings: usage.readings.map((r) => [r.observation_id, r.views, r.aws_cost_usd, r.mismatch_type]) },
     alerts: alerts.map((a) => [a.event_id, a.observed_at, a.report_id, a.alert_type, a.lifecycle, a.severity, a.suppressed_since_last]),
     explanations,
   }));

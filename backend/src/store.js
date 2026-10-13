@@ -160,6 +160,30 @@ export function loadStore({ dataDir, runtimeDir, params = DEFAULT_PARAMS, now = 
     checks: () => cost.checks,
     variance: () => cost.variance,
     awsMismatch: () => cost.awsMismatch,
+    // Every reading's views and hosting cost with the flag the SQL gave it (null = within the band), for the usage-against-cost chart. The fleet rate
+    // is the one script 14 uses: total hosting cost over total views, across readings that have views.
+    awsUsage() {
+      const flags = new Map(cost.awsMismatch.map((r) => [r.observation_id, r.mismatch_type]));
+      let aws = 0;
+      let views = 0;
+      for (const o of observations) {
+        if (o.monthly_active_views > 0) {
+          aws += o.aws_hosting_cost_usd;
+          views += o.monthly_active_views;
+        }
+      }
+      return {
+        fleet_aws_per_view: views > 0 ? aws / views : null,
+        mismatch_ratio: params.aws_mismatch_ratio,
+        readings: observations.map((o) => ({
+          observation_id: o.observation_id,
+          report_id: o.report_id,
+          views: o.monthly_active_views,
+          aws_cost_usd: o.aws_hosting_cost_usd,
+          mismatch_type: flags.get(o.observation_id) ?? null,
+        })),
+      };
+    },
     costMeta: () => ({ credit_price_usd: params.credit_price_usd, price_is_placeholder: true }),
 
     // ---- owner assignment ----

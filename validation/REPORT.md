@@ -3,7 +3,7 @@
 Produced by `npm run validate` (`validation/validate.py`). Every figure below was re-derived from the raw CSV by code that shares nothing
 with the app, then compared with what the app produced. A `FAIL` means the two disagree and one of them is wrong.
 
-**63 of 63 checks passed.**
+**68 of 68 checks passed.**
 
 ## 1. Cleaning the raw CSV
 
@@ -23,6 +23,9 @@ Raw file -> clean readings, set-aside rows and owners. The app side is `npm run 
 | readings with no usable owner | 242 | 242 | PASS |
 | readings over 15 s | 1,470 | 1,470 | PASS |
 | readings at the 55 s ceiling | 6 | 6 | PASS |
+| numeric columns with a value beyond 1.5 x IQR (a statistical outlier) | `[]` | `[]` | PASS |
+| numeric columns with a value more than 3 standard deviations from the mean | `[]` | `[]` | PASS |
+| negative credit values a statistical outlier test would flag (a rule catches them, statistics does not) | 0 | 0 | PASS |
 
 ## 2. Alerts
 
@@ -58,6 +61,8 @@ Readings whose AWS cost is far from what their views predict (3x either way, or 
 |---|---|---|---|
 | readings flagged | 625 | 625 | PASS |
 | the same readings, with the same reason | `{"RPT_209:001": "COST_LOW_FOR_USAGE", "RPT_211:001": "COST_H` | `{"RPT_290:007": "COST_HIGH_FOR_USAGE", "RPT_205:005": "COST_` | PASS |
+| the chart's fleet hosting cost per view (the average line) | 0.305675184 | 0.305675184 | PASS |
+| the chart's points: every reading's views, hosting cost and flag | 0 differ | 0 differ | PASS |
 
 ## 5. Rule-based explanations
 

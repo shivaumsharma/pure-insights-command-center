@@ -309,6 +309,72 @@ describe('Scatter', () => {
   });
 });
 
+describe('Scatter with its own scales and reference lines', () => {
+  const pts = [
+    { key: 'a', label: 'RPT_1:001', x: 500, y: 200, off: false },
+    { key: 'b', label: 'RPT_1:002', x: 1000, y: 1500, off: true },
+    { key: 'c', label: 'RPT_1:003', x: 0, y: 90, off: true },
+  ];
+  const lines = [{ slope: 0.3, label: 'fleet average', tone: 'main' }, { slope: 0.9, label: '3x the average' }, { slope: 0.1, label: '1/3 of the average' }];
+
+  it('gives each axis its own scale (views are thousands, dollars are different), unlike the claimed-against-implied plot', () => {
+    const { container } = render(<Scatter points={pts} sameScale={false} xTitle="Views" yTitle="Cost" ariaLabel="x" />);
+    const labels = [...container.querySelectorAll('svg.scatter text.axis')];
+    const along = labels.filter((t) => t.getAttribute('text-anchor') === 'middle').map((t) => t.textContent);
+    const up = labels.filter((t) => t.getAttribute('text-anchor') === 'end').map((t) => t.textContent);
+    expect(along).not.toEqual(up);
+    expect(container.querySelector('line.diagonal')).toBeNull(); // "equal" means nothing between views and dollars
+  });
+
+  it('draws each reference line with its label, the average solid and the band edges dashed, and keeps every line inside the plot', () => {
+    const { container } = render(<Scatter points={pts} sameScale={false} lines={lines} xTitle="Views" yTitle="Cost" ariaLabel="x" />);
+    const svg = container.querySelector('svg.scatter');
+    const [w, h] = [Number(svg.getAttribute('width')), Number(svg.getAttribute('height'))];
+    expect(svg.querySelectorAll('line.refline-main')).toHaveLength(1);
+    expect(svg.querySelectorAll('line.refline-edge')).toHaveLength(2);
+    for (const label of ['fleet average', '3x the average', '1/3 of the average']) expect(screen.getByText(label)).toBeInTheDocument();
+    for (const l of svg.querySelectorAll('line.refline')) {
+      for (const a of ['x1', 'x2']) { expect(Number(l.getAttribute(a))).toBeGreaterThanOrEqual(0); expect(Number(l.getAttribute(a))).toBeLessThanOrEqual(w); }
+      for (const a of ['y1', 'y2']) { expect(Number(l.getAttribute(a))).toBeGreaterThanOrEqual(0); expect(Number(l.getAttribute(a))).toBeLessThanOrEqual(h); }
+    }
+  });
+
+  it('a steep line leaves the plot through the top and a shallow one through the right edge, and both start at the origin', () => {
+    const { container } = render(<Scatter points={pts} sameScale={false} lines={[{ slope: 5, label: 'steep' }, { slope: 0.1, label: 'shallow' }]} xTitle="Views" yTitle="Cost" ariaLabel="x" />);
+    const svg = container.querySelector('svg.scatter');
+    const width = Number(svg.getAttribute('width'));
+    const [steep, shallow] = [...svg.querySelectorAll('line.refline')].map((l) => ['x1', 'y1', 'x2', 'y2'].map((a) => Number(l.getAttribute(a))));
+    const [x1, y1] = [steep[0], steep[1]];
+    expect([shallow[0], shallow[1]]).toEqual([x1, y1]); // both begin where the axes meet
+    expect(steep[3]).toBeCloseTo(14, 0); // the top of the plot (the top padding)
+    expect(steep[2]).toBeLessThan(width - 16); // ...well before the right edge
+    expect(shallow[2]).toBeCloseTo(width - 16, 0); // the right edge of the plot
+    expect(shallow[3]).toBeGreaterThan(steep[3]); // and still low on the page
+  });
+
+  it('draws marks on the vertical axis for a reading with no views, and the legend uses the words it is given', () => {
+    const { container } = render(<Scatter points={pts} sameScale={false} xTitle="Views" yTitle="Cost" ariaLabel="x" onLabel="Within 3x" offLabel="Outside it (2)" />);
+    expect(container.querySelectorAll('svg.scatter .pt')).toHaveLength(3);
+    expect(screen.getByText('Within 3x')).toBeInTheDocument();
+    expect(screen.getByText('Outside it (2)')).toBeInTheDocument();
+  });
+
+  it('with a great many marks they are drawn smaller and fainter, and only the ones outside the band keep a hover title', () => {
+    const many = Array.from({ length: 500 }, (_, i) => ({ key: `p${i}`, label: `r${i}`, x: i, y: i * 2, off: i % 50 === 0 }));
+    const { container } = render(<Scatter points={many} sameScale={false} xTitle="x" yTitle="y" ariaLabel="x" />);
+    expect(Number(container.querySelector('circle.pt-on').getAttribute('r'))).toBeLessThan(3);
+    expect(container.querySelector('circle.pt-on')).toHaveClass('pt-faint');
+    expect(container.querySelectorAll('svg.scatter g > title')).toHaveLength(10);
+    const few = render(<Scatter points={many.slice(0, 20)} sameScale={false} xTitle="x" yTitle="y" ariaLabel="y" />);
+    expect(Number(few.container.querySelector('circle.pt-on').getAttribute('r'))).toBeGreaterThan(3);
+  });
+
+  it('formats the values in the hover title with the formatters it is given', () => {
+    const { container } = render(<Scatter points={pts} sameScale={false} xTitle="Views" yTitle="Cost" ariaLabel="x" formatX={(v) => `${v} views`} formatY={(v) => `$${v}`} />);
+    expect([...container.querySelectorAll('svg.scatter g > title')].map((t) => t.textContent)).toContain('RPT_1:002: Views 1000 views, Cost $1500');
+  });
+});
+
 describe('FleetMap', () => {
   const reports = [
     { report_id: 'RPT_200', last_refresh_status: 'SUCCESS', latest_load_time_sec: 12.3 },

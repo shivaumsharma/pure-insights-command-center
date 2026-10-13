@@ -128,3 +128,9 @@ a.tile:hover { border-color: currentColor; transform: translateY(-2px); }
 
 /* An amount with its currency sign in the accent colour. */
 .money .cur { color: var(--pi-brand-strong); margin-right: 0.15em; }
+
+/* Reference lines on a scatter: the average (solid) and the edges of the band that counts as normal (dashed). */
+.scatter .refline { stroke-width: 1.5; }
+.scatter .refline-main { stroke: var(--pi-text); }
+.scatter .refline-edge { stroke: var(--pi-text-muted); stroke-dasharray: 5 4; }
+.scatter .pt-faint { fill-opacity: 0.45; }

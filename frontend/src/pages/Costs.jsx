@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext.jsx';
 import { Scatter } from '../components/charts/Scatter.jsx';
 import { BarList } from '../components/charts/StackBars.jsx';
 import { Badge, Card, DataTable, EmptyState, ErrorBox, Field, OwnerCell, PageHeader, Pagination, PriceBanner, Skeleton } from '../components/ui.jsx';
+import { describeCheck } from '../lib/checkCopy.js';
 import { fmtCredits, fmtEventTime, fmtInt, fmtUsd } from '../lib/format.js';
 import { topBy } from '../lib/summaries.js';
 import { useQuery } from '../lib/useQuery.js';
@@ -39,12 +40,17 @@ export default function Costs() {
   const checks = useQuery(() => api.get('/api/costs/reconciliation'), [api], { enabled: isAdmin });
   const variance = useQuery(() => api.get('/api/costs/variance', { status: 'OUTSIDE_TOLERANCE', limit: 10, offset: varOffset }), [api, varOffset], { enabled: isAdmin });
   const aws = useQuery(() => api.get('/api/costs/aws-mismatch', { type: awsType, limit: 10, offset: awsOffset }), [api, awsType, awsOffset], { enabled: isAdmin });
+  const usage = useQuery(() => api.get('/api/costs/aws-usage'), [api], { enabled: isAdmin }); // every reading, for the chart
 
   const failing = checks.data?.data.some((c) => c.status === 'FAIL');
   const perView = topBy(everyCost.data?.data ?? [], 'cost_per_view_usd', 10);
   const idle = topBy(everyCost.data?.data ?? [], 'idle_cost_usd', 10);
   const plotted = everyVariance.data?.data ?? [];
   const offCount = plotted.filter((v) => v.status === 'OUTSIDE_TOLERANCE').length;
+  const readings = usage.data?.data ?? [];
+  const rate = usage.data?.meta.fleet_aws_per_view;
+  const ratio = usage.data?.meta.mismatch_ratio;
+  const outside = readings.filter((r) => r.mismatch_type !== null).length;
 
   return (
     <>
@@ -67,7 +73,18 @@ export default function Costs() {
                 rows={checks.data.data}
                 rowKey={(c) => c.check_id}
                 columns={[
-                  { key: 'id', header: 'Check', render: (c) => <><strong>{c.check_id}</strong> {c.description}<div className="muted small">{c.note}</div></> },
+                  {
+                    key: 'id', header: 'Check',
+                    render: (c) => {
+                      const copy = describeCheck(c);
+                      return (
+                        <>
+                          <div><span className="mono small muted">{c.check_id}</span> <strong>{copy.name}</strong></div>
+                          <div className="muted small">{copy.why}</div>
+                        </>
+                      );
+                    },
+                  },
                   { key: 'status', header: 'Result', render: (c) => <Badge tone={CHECK_TONE[c.status]}>{CHECK_LABEL[c.status]}</Badge> },
                   { key: 'expected', header: 'Expected', align: 'right', render: (c) => fmtCredits(c.expected_value) },
                   { key: 'actual', header: 'Actual', align: 'right', render: (c) => fmtCredits(c.actual_value) },
@@ -171,6 +188,37 @@ export default function Costs() {
           </>
         )}
       </Card>
+
+      {isAdmin && (
+        <Card
+          title="Hosting cost against active views"
+          subtitle="Each mark is one reading. If hosting cost followed usage, the marks would hug the solid line, the fleet's average cost per view."
+        >
+          <Loading query={usage} rows={4} />
+          {usage.data && readings.length > 0 && (
+            <>
+              <Scatter
+                sameScale={false}
+                points={readings.map((r) => ({ key: r.observation_id, label: r.report_id, x: r.views, y: r.aws_cost_usd, off: r.mismatch_type !== null }))}
+                lines={[
+                  { slope: rate, label: 'fleet average', tone: 'main' },
+                  { slope: rate * ratio, label: `${ratio}x the average` },
+                  { slope: rate / ratio, label: `1/${ratio} of the average` },
+                ]}
+                xTitle="Active views" yTitle="Hosting cost" formatX={fmtInt} formatY={fmtUsd}
+                onLabel={`Within ${ratio}x of the average`} offLabel={`Outside it (${fmtInt(outside)})`}
+                ariaLabel={`Hosting cost against active views for ${fmtInt(readings.length)} readings; ${fmtInt(outside)} cost more than ${ratio} times, or less than 1/${ratio} of, what their views predict`}
+              />
+              <p className="muted small section-note">
+                The fleet averages {fmtUsd(rate)} of hosting per view. Marks above the upper dashed line cost {ratio}x or more than their views predict; marks below
+                the lower one cost 1/{ratio} or less; marks on the left edge have no views at all yet still cost money. {fmtInt(outside)} of {fmtInt(readings.length)} readings fall outside.
+                In this synthetic data cost and views are unrelated, so the marks form a cloud instead of hugging the line. That shows the check works; it says nothing about
+                a real report. Active users are approximated by monthly active views, and the {ratio}x line is my choice.
+              </p>
+            </>
+          )}
+        </Card>
+      )}
 
       {isAdmin && (
         <Card
