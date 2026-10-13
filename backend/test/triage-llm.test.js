@@ -101,8 +101,8 @@ test('refusals, truncation, timeouts and provider errors become typed errors wit
 });
 
 test('error text never repeats what the provider said, so a key or request echo cannot leak', async () => {
-  const echoed = Anthropic.APIError.generate(401, { error: { message: 'invalid x-api-key sk-ant-SECRET123' } }, 'invalid x-api-key sk-ant-SECRET123', new Headers());
-  for (const reply of [echoed, new Error('connect failed for sk-ant-SECRET123')]) {
+  const echoed = Anthropic.APIError.generate(401, { error: { message: 'invalid x-api-key fake-provider-key-SECRET123' } }, 'invalid x-api-key fake-provider-key-SECRET123', new Headers());
+  for (const reply of [echoed, new Error('connect failed for fake-provider-key-SECRET123')]) {
     try {
       await run(fakeClient(reply));
       assert.fail('should have thrown');
