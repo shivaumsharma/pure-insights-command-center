@@ -5,6 +5,9 @@
 //   NEEDS_REVIEW   held. Admins see it in the review queue; everyone else is told it is under review. An admin can approve it
 //   REJECTED       withheld (something in it is false or fabricated). Only admins see it, and they can only dismiss it
 //
+// When an AI's answer is not shown but the rule-based answer for the same alert passed the same checks, that one is kept alongside it
+// (`alternative`) and is what everyone else sees instead, so asking for an explanation always gets a useful, checked answer when one exists.
+//
 // Results are cached per alert, so asking twice costs nothing and a person can never get two different answers to the same question.
 // Review decisions are the only thing persisted (data/runtime/triage.json); the data itself is never modified.
 
@@ -12,6 +15,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { HttpError, badRequest, notFound } from '../lib/errors.js';
 import { baselineTriager } from './baseline.js';
+import { checklist } from './checks.js';
 import { buildEvidence } from './evidence.js';
 import { TriageError } from './llm.js';
 import { STATUS, validateSuggestion } from './validator.js';
@@ -82,11 +86,15 @@ export function createTriageService({
     if (produced.usage) { counters.tokens_in += produced.usage.input_tokens; counters.tokens_out += produced.usage.output_tokens; }
 
     const verdict = validateSuggestion(produced.suggestion, evidence);
-    // When an AI produced this, also record how the rule-based control would have fared, for the measurement page.
+    // When an AI produced this, also record how the rule-based control would have fared, for the measurement page. If the AI's answer is not going
+    // to be shown and the control's passed, keep the control's answer to stand in for it.
     let baselineStatus = null;
+    let alternative = null;
     if (triager === aiTriager) {
       const control = await baselineTriager.triage(evidence);
-      baselineStatus = validateSuggestion(control.suggestion, evidence).status;
+      const controlVerdict = validateSuggestion(control.suggestion, evidence);
+      baselineStatus = controlVerdict.status;
+      if (verdict.status !== STATUS.TRUSTED && controlVerdict.status === STATUS.TRUSTED) alternative = { suggestion: controlVerdict.suggestion };
     }
 
     return {
@@ -104,6 +112,7 @@ export function createTriageService({
       usage: produced.usage,
       fallback,
       baseline_status: baselineStatus,
+      alternative,
       created_at: now().toISOString(),
       review: { state: verdict.status === STATUS.TRUSTED ? 'none' : 'pending', by: null, at: null, note: null },
     };
@@ -121,7 +130,11 @@ export function createTriageService({
     if (r.fallback) out.fallback = { from: r.fallback.from };
     if (shown || admin) {
       out.suggestion = r.suggestion;
-      out.evidence = r.evidence;
+      out.checks = checklist(r.findings); // everyone who sees a suggestion sees how it was checked; for a shown one every line is OK
+    }
+    if (shown || admin || r.alternative) out.evidence = r.evidence; // the same facts the checked answer cites, whoever it is shown to
+    if (!shown && r.alternative) {
+      out.alternative = { triager: 'baseline', model: null, status: 'TRUSTED', suggestion: r.alternative.suggestion, checks: checklist([]) };
     }
     if (admin) {
       out.validation = r.status;
@@ -131,10 +144,11 @@ export function createTriageService({
       out.baseline_validation = r.baseline_status;
     }
     if (!shown && !admin) {
+      const instead = r.alternative ? ' The rule-based explanation, which was checked against the data, is shown instead.' : '';
       out.message =
-        status === 'UNDER_REVIEW' ? 'A suggestion was produced but could not be fully verified against the data, so a person is checking it first.'
-        : status === 'WITHHELD' ? 'A suggestion was produced but it did not match the data, so it was withheld.'
-        : 'A person reviewed this suggestion and chose not to show it.';
+        (status === 'UNDER_REVIEW' ? 'The AI produced an explanation but it could not be fully verified against the data, so a person is checking it first.'
+        : status === 'WITHHELD' ? 'The AI produced an explanation but it did not match the data, so it was withheld.'
+        : 'A person reviewed the AI explanation and chose not to show it.') + instead;
     }
     if (shown && r.review.state === 'approved') out.reviewed_by_a_person = true;
     return out;

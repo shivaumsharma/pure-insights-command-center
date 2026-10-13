@@ -88,12 +88,12 @@ test('a true AI suggestion is TRUSTED: everyone sees it, with the evidence behin
   assert.equal(ai.calls, 1, 'one model call, however many people look');
 });
 
-test('a FALSE AI suggestion is withheld: non-admins get no content, admins see the suggestion and exactly why it failed', async () => {
+test('a FALSE AI suggestion is withheld: non-admins never see it or why it failed, admins see the suggestion and exactly why', async () => {
   const svc = make({ aiTriager: fakeAi(lying) });
   const id = pick(1);
   const viewerView = await svc.get(id, viewer);
   assert.equal(viewerView.status, 'WITHHELD');
-  assert.ok(!('suggestion' in viewerView) && !('evidence' in viewerView) && !('findings' in viewerView));
+  assert.ok(!('suggestion' in viewerView) && !('findings' in viewerView) && !('checks' in viewerView));
   assert.match(viewerView.message, /did not match the data/);
 
   const adminView = await svc.get(id, admin);
@@ -321,4 +321,103 @@ test('routes: asking too often is a 429, and a resolved alert is a 400', async (
   assert.equal(limited.status, 429);
   assert.equal(limited.body.error.code, 'RATE_LIMITED');
   assert.equal((await call('GET', `/api/alerts/${resolved.event_id}/triage`, admin)).status, 400);
+});
+
+// ------------------------------------------------------------------ the checked rule-based answer stands in when the AI's is not shown
+
+const verdictOf = async (alert) => { const ev = buildEvidence({ alert, store }); return validateSuggestion((await baselineTriager.triage(ev)).suggestion, ev).status; };
+async function firstWhere(wanted) {
+  for (const a of explainable) if ((await verdictOf(a)) === wanted) return a.event_id;
+  throw new Error(`no alert whose rule-based verdict is ${wanted}`);
+}
+
+test('when the AI is withheld and the rules passed the same checks, everyone else sees the rule-based explanation instead, labelled as such', async () => {
+  const id = await firstWhere('TRUSTED');
+  const svc = make({ aiTriager: fakeAi(lying) });
+  const v = await svc.get(id, viewer);
+  assert.equal(v.status, 'WITHHELD');
+  assert.ok(!('suggestion' in v), 'the AI answer itself stays hidden');
+  assert.equal(v.alternative.triager, 'baseline');
+  assert.equal(v.alternative.model, null);
+  assert.equal(v.alternative.status, 'TRUSTED');
+  assert.ok(v.alternative.suggestion.causes.length > 0);
+  assert.ok(v.alternative.checks.every((c) => c.result === 'OK'));
+  assert.ok(v.evidence.items.O1, 'the evidence its citations point at comes with it');
+  assert.match(v.message, /rule-based explanation.* is shown instead/);
+  // and the stand-in really is the rules' answer for this alert
+  assert.deepEqual(v.alternative.suggestion, (await baselineTriager.triage(buildEvidence({ alert: alerts.get(id), store }))).suggestion);
+});
+
+test('an admin sees the AI answer, why it failed, and the stand-in, all on the same alert', async () => {
+  const id = await firstWhere('TRUSTED');
+  const svc = make({ aiTriager: fakeAi(lying) });
+  const v = await svc.get(id, admin);
+  assert.ok(v.suggestion && v.alternative && v.findings.length > 0);
+  assert.equal(v.checks.find((c) => c.id === 'cites').result, 'FALSE');
+  assert.ok(v.checks.filter((c) => c.result === 'OK').length >= 1, 'checks that passed are listed too');
+});
+
+test('an unverifiable AI answer is held, and the stand-in covers for it while a person decides', async () => {
+  const id = await firstWhere('TRUSTED');
+  const svc = make({ aiTriager: fakeAi(unverifiable) });
+  const v = await svc.get(id, viewer);
+  assert.equal(v.status, 'UNDER_REVIEW');
+  assert.ok(v.alternative);
+  assert.match(v.message, /could not be fully verified.*rule-based explanation/);
+  assert.equal((await svc.get(id, admin)).checks.find((c) => c.id === 'causes').result, 'UNVERIFIED');
+});
+
+test('there is no stand-in when the rules have nothing to offer either: the old message, and no evidence, is all that is shown', async () => {
+  const id = await firstWhere('NEEDS_REVIEW');
+  const svc = make({ aiTriager: fakeAi(lying) });
+  const v = await svc.get(id, viewer);
+  assert.equal(v.status, 'WITHHELD');
+  assert.ok(!('alternative' in v) && !('evidence' in v) && !('suggestion' in v));
+  assert.doesNotMatch(v.message, /rule-based/);
+});
+
+test('there is no stand-in when the AI answer was good, when the rules wrote the answer, or when the AI failed and the rules covered for it', async () => {
+  const id = await firstWhere('TRUSTED');
+  const good = await make({ aiTriager: fakeAi(honest) }).get(id, viewer);
+  assert.equal(good.status, 'TRUSTED');
+  assert.ok(!('alternative' in good));
+
+  const plain = await make().get(id, viewer);
+  assert.equal(plain.triager, 'baseline');
+  assert.ok(!('alternative' in plain));
+
+  const broken = { name: 'anthropic', model: 'x', async triage() { throw new TriageError('TIMEOUT', 'slow'); } };
+  const covered = await make({ aiTriager: broken }).get(id, viewer);
+  assert.equal(covered.triager, 'baseline');
+  assert.deepEqual(covered.fallback, { from: 'anthropic' });
+  assert.ok(!('alternative' in covered), 'the rules are already the answer, so there is nothing to stand in for');
+});
+
+test('everyone who sees a suggestion also sees how it was checked, and for a shown one every line is OK', async () => {
+  const id = await firstWhere('TRUSTED');
+  const svc = make({ aiTriager: fakeAi(honest) });
+  for (const user of [viewer, owner2, admin]) {
+    const v = await svc.get(id, user);
+    assert.ok(v.checks.length >= 7);
+    assert.ok(v.checks.every((c) => c.result === 'OK'), user.role);
+  }
+});
+
+test('approving the AI answer shows it in place of the stand-in', async () => {
+  const id = await firstWhere('TRUSTED');
+  const svc = make({ aiTriager: fakeAi(unverifiable) });
+  assert.ok((await svc.get(id, viewer)).alternative);
+  svc.review({ eventId: id, decision: 'approve', actor: admin.email });
+  const after = await svc.get(id, viewer);
+  assert.equal(after.status, 'APPROVED');
+  assert.ok(after.suggestion && !('alternative' in after));
+});
+
+test('the stand-in survives a restart of the server', async () => {
+  const id = await firstWhere('TRUSTED');
+  const dir = tmpDir();
+  await make({ aiTriager: fakeAi(lying), runtimeDir: dir }).get(id, viewer);
+  const reopened = await make({ runtimeDir: dir }).get(id, viewer); // no AI configured now: the saved result is what answers
+  assert.equal(reopened.status, 'WITHHELD');
+  assert.equal(reopened.alternative.triager, 'baseline');
 });
