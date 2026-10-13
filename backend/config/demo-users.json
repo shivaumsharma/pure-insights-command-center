@@ -1,0 +1,29 @@
+{
+  "_notice": "DEMO ONLY. Local development accounts for synthetic data. Never reuse these passwords; replace this file for any real deployment.",
+  "users": [
+    {
+      "email": "admin@demo.local",
+      "name": "Admin",
+      "role": "admin",
+      "password": "2NlzQHGmHnoIpslJ"
+    },
+    {
+      "email": "user_6@company.com",
+      "name": "Owner (user_6)",
+      "role": "owner",
+      "password": "-ytlfOi72Sq6ruam"
+    },
+    {
+      "email": "user_2@company.com",
+      "name": "Owner (user_2)",
+      "role": "owner",
+      "password": "8tHYAFd3ZR19F_De"
+    },
+    {
+      "email": "viewer@demo.local",
+      "name": "Viewer",
+      "role": "viewer",
+      "password": "SpCzaOnBzU1_YsBQ"
+    }
+  ]
+}
