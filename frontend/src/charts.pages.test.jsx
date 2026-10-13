@@ -177,6 +177,7 @@ describe('data quality and alerts', () => {
     const dq = {
       rows: { in: 2000, clean: 1976, quarantined: 24, conserved: true }, quarantine_by_reason: { NEGATIVE_CREDITS: 24 },
       flags_on_clean_rows: { orphan_observations: 242, status_unknown: 98, zero_views: 4, concurrency_exceeds_views: 91 },
+      reports: { total: 100, currently_orphaned: 13, with_any_orphan_observation: 94, with_more_than_one_owner: 100 },
     };
     renderApp({ role: 'admin', path: '/data-quality', routes: { ...baseRoutes, 'GET /api/dq-report': { data: dq }, 'GET /api/quarantine': page([]) } });
     const rows = await screen.findByRole('list', { name: 'Rows used and rows set aside' });
@@ -186,6 +187,8 @@ describe('data quality and alerts', () => {
     expect(within(why).getByText('Negative Snowflake credits').closest('li')).toHaveTextContent('24');
     const flags = screen.getByRole('list', { name: 'Rows kept but flagged' });
     expect(within(flags).getByText('Readings with no owner').closest('li')).toHaveTextContent('242');
+    // 242 is rows; the page says so and gives the report counts, so it cannot be mistaken for the 13 unowned reports on the overview
+    expect(within(flags).getByText('Readings with no owner').closest('li')).toHaveTextContent('These are rows, not reports: 94 reports have at least one, and 13 have no owner right now.');
   });
 
   it('the alerts page splits the open alerts by severity, and edges each open alert by its severity', async () => {

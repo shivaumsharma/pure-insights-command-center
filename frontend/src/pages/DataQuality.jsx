@@ -23,6 +23,11 @@ const FLAG_ROWS = [
 ];
 const PAGE_SIZE = 25;
 
+// 242 readings have no owner, but that is rows, not reports: say so, and give the report counts beside it (the Overview shows 13).
+const ownerHint = (d, why) => (d.reports
+  ? `These are rows, not reports: ${d.reports.with_any_orphan_observation} reports have at least one, and ${d.reports.currently_orphaned} have no owner right now. ${why}`
+  : why);
+
 export default function DataQuality() {
   const { api } = useAuth();
   const [offset, setOffset] = useState(0);
@@ -65,7 +70,7 @@ export default function DataQuality() {
             <Card title="Kept but flagged" subtitle="Odd, but not untrustworthy.">
               <BarList
                 label="Rows kept but flagged"
-                rows={FLAG_ROWS.map(([k, label, why]) => ({ key: k, label, hint: why, value: d.flags_on_clean_rows[k], tone: 'info', valueText: fmtInt(d.flags_on_clean_rows[k]) }))}
+                rows={FLAG_ROWS.map(([k, label, why]) => ({ key: k, label, hint: k === 'orphan_observations' ? ownerHint(d, why) : why, value: d.flags_on_clean_rows[k], tone: 'info', valueText: fmtInt(d.flags_on_clean_rows[k]) }))}
               />
             </Card>
           </div>
