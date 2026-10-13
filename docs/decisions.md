@@ -79,7 +79,7 @@ Limits, stated plainly:
 - Booleans are stored as 0/1 locally, so no script compares a boolean column; they compare the underlying numbers.
 
 ### D10. Credits are attributed by elapsed-time share within each warehouse-hour
-Snowflake bills per warehouse-hour, not per query, so a report's cost has to be apportioned. Each hour's credits are
+Snowflake meters credits per warehouse (billed by the second while it runs, and reported hourly), not per query, so a report's cost has to be apportioned. Each hour's credits are
 split across the queries that ran in it in proportion to `total_elapsed_time_ms`. Failed and timed-out queries keep their
 share because they held the warehouse. Credits are conserved (check R1). Alternatives not used: splitting by query count
 (ignores that queries differ in size) or by bytes scanned (not available in the source).
@@ -154,7 +154,7 @@ The first design resolved on one clear reading. On this data (74% of readings br
 1,970 messages for 1,976 observations: reports flapped between triggered and resolved. Requiring two consecutive clear readings
 cut resolutions from 738 to 343. I swept six settings (1-3 clear readings, 3 h and 6 h cooldown) in an independent Python model before
 choosing; the choice (2 readings, 6 h) is a defensible operations cadence, not the minimum I could have picked.
-**Result on the real data: 2,026 breaching readings produce 838 alerts that need attention (TRIGGERED, ESCALATED, REPEATED), i.e. 41%,
+**Result on the real data: 2,026 breaching conditions (1,470 slow readings plus 556 failed refreshes; 410 readings are both, so 1,616 distinct readings) produce 838 alerts that need attention (TRIGGERED, ESCALATED, REPEATED), i.e. 41%,
 plus 343 resolutions; 143 conditions are still open at the end.** That is a modest reduction. It is limited by the data being
 near-permanently "in alert", so the dashboard should lead with the active-alerts view and severity filters, not a pop-up per alert.
 
@@ -504,10 +504,26 @@ icons) were each caught by a test, after tests were strengthened for four that f
 I ran the whole suite on a Snowflake trial account (version 10.37.100, AWS Asia Pacific Southeast 7) on 14 October 2026: create the schema, load the five generated files, run
 scripts 10 to 14, then compare 45 values with what the application computes locally (row counts, column totals, statuses). Method: `scripts/snowflake_run.py --bundle`
 writes one SQL file that does all of it inside a worksheet; the last result grid is saved as CSV and read back with `--from-csv`.
-- **First run: 42 matched, 3 differed.** Check R1 (attributed credits equal metered credits in every warehouse-hour) failed in 52 of 80 hours, and two sums were off by
-  about 0.19 credits in 1.2 million. Cause: the workload share was `elapsed_ms * 1.0 / window_elapsed_ms`, an exact-decimal division, and Snowflake keeps only a limited
+- **First run: 42 matched, 3 differed.** The three were R1's count of unbalanced warehouse-hours (52 of 80, where 0 was expected), R1's status, and the sum of per-report
+  differences (0.23 against 0.02). The total of attributed credits was also 0.19 higher out of 1.2 million, which was inside the comparison tolerance. Cause: the workload share was `elapsed_ms * 1.0 / window_elapsed_ms`, an exact-decimal division, and Snowflake keeps only a limited
   number of decimal places for that. SQLite divides in floating point, so no local test could show it. Evidence: `validation/snowflake_run_1_before_fix.csv`.
 - **Fix:** the share and the fleet hosting rate are now divided in DOUBLE (`CAST(... AS DOUBLE)`), which is portable. Two tests keep it that way and fail without the fix.
 - **Second run: 45 of 45 matched**, R1 passes, R8 still fails on 64 reports as designed. Evidence: `validation/snowflake_run_2_after_fix.csv`.
 - **What this does and does not show.** The scripts run on Snowflake and give the same numbers as the local engine and the Python re-derivation. The usage logs are still the
   simulated tables built from the CSV, not real `ACCOUNT_USAGE` views, and the comparison is against my own local outputs.
+
+### D48. Corrections after outside review
+Three reviewers read the submission and I checked their claims against the data before acting. What was right, and what changed (text only; no code, SQL logic or Snowflake rerun):
+- **"2,026 breaching readings" was mislabelled.** It is slow readings (1,470) plus failed refreshes (556), and 410 readings are both, so there are 1,616 distinct readings. It is now called conditions everywhere.
+- **The first-run description was loose** (see D47): three comparisons were flagged, and the 0.19-credit gap in the total was inside tolerance.
+- **"Snowflake bills per warehouse-hour" was inaccurate.** Billing is per second while a warehouse runs (60-second minimum); metering is reported hourly.
+- **The credit scale is not physical.** The metering tables average 15,079 credits per warehouse-hour (highest 18,724). One 6X-Large warehouse uses 512 an hour. This comes from the supplied data (about 610 credits per reading),
+  so absolute credits and dollars cannot be real; rankings and ratios still work. Recorded as finding F15 and stated in the README and report.
+- **Money and "13%" were vague.** At $3 per credit: total $4,074,285; the 13 orphaned reports $521,801 (12.8%; 12.9% at $2 and 12.8% at $4); idle (zero-view) spend $8,827; AWS hosting 11.2% of the total.
+- **Not mistakes, but unexplained:** 838 alerts plus 343 resolutions make the 1,181 events; the rule-based explainer abstains when the data supports no cause (117 of 838 alerts), so it passed 9 of 10 sampled alerts by design (none were rejected).
+- **The tests that plant known answers existed but were not mentioned** in the report (hand-worked fixtures, one failing test per reconciliation check). Now stated.
+- **Valid, kept for real data rather than built now:** split each query's runtime across the hours it spans, or use Snowflake's `QUERY_ATTRIBUTION_HISTORY` view (which leaves out warehouse idle time); treat monthly views against hourly credits as a stated
+  assumption; quarantining a row also drops its telemetry from alerting (24 of 2,000 readings), where production would exclude only the credit field; calibrate the 3x hosting rule (it flags 31.6% because this data is uncorrelated).
+- **The simulation method was not explained in the report** (a fourth reviewer's main point, and fair, since it drives every cost number). It is now: reading k lands in hour k of 1 September 2026; each report is assigned to one of four warehouses by a stable hash of its id; metered credits are the CSV credits summed per warehouse-hour; query time is query count times average load time, independent of credits (see D5).
+- **Quarantine drops 24 readings from alerting** (raised by two reviewers). Keeping their telemetry and nulling only the credit field would change the alert counts, the validators and the Snowflake comparison, so it is stated as a trade-off and kept for the real-data version.
+- **Not adopted:** tiered pricing models, an external database for alert history, window-based de-duplication of views, token revocation. Each is scope beyond the brief for a demo.

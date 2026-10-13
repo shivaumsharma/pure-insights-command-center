@@ -51,7 +51,7 @@ RANK = {'low': 1, 'medium': 2, 'high': 3, 'critical': 4}
 # The numbers README.md quotes. A change to the code or the data that moves one of these fails the run until the README is updated.
 CLAIMS = {
     'rows received': 2000, 'rows used': 1976, 'rows set aside (all: negative credits)': 24, 'reports': 100, 'reports with no owner now': 13,
-    'readings over 15 s': 1470, 'refreshes failed or timed out': 556, 'breaching readings (slow + failed)': 2026,
+    'readings over 15 s': 1470, 'refreshes failed or timed out': 556, 'breaching conditions (slow + failed; a reading can be both)': 2026,
     'alerts needing attention (not resolutions)': 838, 'alerts including resolutions': 1181,
     'reports outside 10% on credits': 64, 'readings flagged on AWS cost': 625,
     'alerts with a data-supported cause': 721, 'alerts with none (sent to a person)': 117,
@@ -459,7 +459,7 @@ def main():
     derived = {
         'rows received': rows_in, 'rows used': len(clean), 'rows set aside (all: negative credits)': reasons.get('NEGATIVE_CREDITS', 0) if len(aside) == reasons.get('NEGATIVE_CREDITS', 0) else -1,
         'reports': len(latest), 'reports with no owner now': orphaned_now, 'readings over 15 s': sum(1 for o in clean if o['load'] > LATENCY_LIMIT),
-        'refreshes failed or timed out': sum(1 for o in clean if o['status'] in ('FAILED', 'TIMED_OUT')), 'breaching readings (slow + failed)': breaches,
+        'refreshes failed or timed out': sum(1 for o in clean if o['status'] in ('FAILED', 'TIMED_OUT')), 'breaching conditions (slow + failed; a reading can be both)': breaches,
         'alerts needing attention (not resolutions)': attention, 'alerts including resolutions': len(alerts),
         'reports outside 10% on credits': sum(1 for v in mine_status.values() if v == 'OUTSIDE_TOLERANCE'), 'readings flagged on AWS cost': len(mismatches),
         'alerts with a data-supported cause': with_cause, 'alerts with none (sent to a person)': len(mine_causes) - with_cause,

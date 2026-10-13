@@ -45,16 +45,18 @@ All money is US dollars, because the data's cost column is `aws_hosting_cost_usd
 
 - 2,000 rows describe 100 reports (20 readings each). 24 rows have negative credits and are set aside in a ledger, not deleted.
 - 13 reports currently have no owner; 74% of readings exceed the 15 s limit, so alerts are de-duplicated:
-  2,026 breaching readings become 838 alerts needing attention (41%). That is a modest cut because the data is almost always "in alert".
+  2,026 breaching conditions (1,470 slow readings plus 556 failed refreshes; 410 readings are both, so 1,616 distinct readings) become 838 alerts needing attention (41% of the conditions). That is a modest cut because the data is almost always "in alert".
 - Attributing credits by query workload disagrees with the CSV's per-report credits for 64 of 100 reports. This is **by design** of the
   synthetic data, and shows the reconciliation can catch a mismatch. It is not evidence that any real report is mis-billed.
 - The data is statistically random (columns are uncorrelated), so rankings reflect the generator, and dollar figures rest on a rough credit price.
+- The data averages about 15,000 credits per warehouse-hour (highest 18,724). One of Snowflake's largest warehouses (6X-Large) uses 512 an hour, so absolute credit and dollar amounts cannot be real spend. Rankings and ratios still work.
+- At $3 per credit the modelled spend is $4.07 million. The 13 orphaned reports account for $521,801 of it (12.8%, and 12.8 to 12.9% at $2 or $4), and zero-view readings for $8,827.
 - Every discrepancy, with evidence, impact and who to route it to, is in [`docs/validation-findings.md`](docs/validation-findings.md).
 
 | Number | Where it comes from | How much to trust it |
 |---|---|---|
 | 100 reports, 24 negative-credit rows, 13 unowned | The supplied CSV, re-derived by `validation/validate.py` | Solid: counts of real file contents |
-| 838 alerts from 2,026 breaching readings | My alert rules on the CSV; every alert matched one by one by the Python model | The rules are my choices; the reduction depends on this random data |
+| 838 alerts from 2,026 breaching conditions (slow readings plus failed refreshes) | My alert rules on the CSV; every alert matched one by one by the Python model | The rules are my choices; the reduction depends on this random data |
 | 64 of 100 reports disagree on credits | My simulated usage logs vs the CSV; matched by the Python model | Built to be independent; shows the check works, says nothing about real billing |
 | Warehouse credits equal CSV credits | Built from the CSV | True by construction; proves nothing |
 | Any dollar figure | A rough $3 per credit | Compare reports with each other only |

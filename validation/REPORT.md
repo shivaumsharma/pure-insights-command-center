@@ -86,7 +86,7 @@ Each figure the README states, recomputed here. If one moves, update the README.
 | reports with no owner now | 13 | 13 | PASS |
 | readings over 15 s | 1,470 | 1,470 | PASS |
 | refreshes failed or timed out | 556 | 556 | PASS |
-| breaching readings (slow + failed) | 2,026 | 2,026 | PASS |
+| breaching conditions (slow + failed; a reading can be both) | 2,026 | 2,026 | PASS |
 | alerts needing attention (not resolutions) | 838 | 838 | PASS |
 | alerts including resolutions | 1,181 | 1,181 | PASS |
 | reports outside 10% on credits | 64 | 64 | PASS |

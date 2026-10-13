@@ -1,7 +1,7 @@
 -- Step 1 of 5: attribute warehouse credits to reports.
 --
--- Method (the standard way to cost queries on a shared warehouse, since Snowflake bills per warehouse-hour,
--- not per query): split each warehouse-hour's credits across the queries that ran in it, in proportion to
+-- Method (the standard way to cost queries on a shared warehouse, since Snowflake meters credits per warehouse,
+-- reported hourly, not per query): split each warehouse-hour's credits across the queries that ran in it, in proportion to
 -- their share of elapsed time. A report's credits are the sum over the hours it ran.
 --
 -- Grain of the output: one row per QUERY_HISTORY row (here, one report in one hour).

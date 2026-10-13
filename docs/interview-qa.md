@@ -31,7 +31,7 @@ every set-aside row is in a ledger with its reason and original line.
 
 ## 5. 74% of readings were over the 15-second limit. How did you handle alert noise, and did it work?
 Partly. I only announce a problem when it first appears, when it gets worse, as a reminder every 6 hours, and when it clears (after two good
-readings, so it does not flap). Repeats are counted, not hidden. On this data 2,026 breaching readings become 838 alerts needing attention, a
+readings, so it does not flap). Repeats are counted, not hidden. On this data 2,026 breaching conditions (1,470 slow readings plus 556 failed refreshes; 410 readings are both) become 838 alerts needing attention, a
 41% rate. That is modest, because the data is almost always in alert. My first design produced about one message per reading; I measured
 that, fixed the flapping, and I am not claiming more than the number shows.
 *Check:* decisions D20 and D21.

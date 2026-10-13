@@ -133,6 +133,6 @@ test('real data matches an independent Python implementation of the same rules',
   const bySev = {};
   for (const a of open) bySev[a.severity] = (bySev[a.severity] ?? 0) + 1;
   assert.deepEqual(bySev, { high: 115, medium: 12, low: 7, critical: 9 });
-  // 838 of the 2,026 breaching readings needed human attention (41%); the rest were held back or are state changes.
+  // 838 of the 2,026 breaching conditions (slow readings plus failed refreshes) needed human attention (41%); the rest were held back or are state changes.
   assert.equal(s.emitted.TRIGGERED + s.emitted.ESCALATED + s.emitted.REPEATED, 838);
 });
