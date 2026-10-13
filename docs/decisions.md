@@ -399,7 +399,7 @@ The README said headline numbers had been "recomputed independently in Python". 
 a reviewer could not reproduce the claim: an evidence-honesty gap. `validation/validate.py` fixes it. It reads the **raw CSV** and, with its own
 code (standard library only, nothing shared with the JavaScript or the SQL), re-derives the cleaning, every alert, the credit attribution, cost per
 view, the variance check, the hosting-cost flags and the rule-based explanations, and compares each with what the app produced (the real alert
-engine via `scripts/dump-app-results.mjs`, and the SQL suite's output files). `npm run validate` writes `validation/REPORT.md` (42 checks, all
+engine via `scripts/dump-app-results.mjs`, and the SQL suite's output files). `npm run validate` writes `validation/REPORT.md` (63 checks, all
 passing) and exits 1 on any difference. It also checks every number the README quotes, so a stale README fails the run. It runs in CI.
 
 It is not a new feature: it is the evidence for claims the project already made, and it is the job description's own task (rerun the analytics
@@ -443,6 +443,23 @@ dollars. I did not convert to rupees: that would need an exchange rate the data 
 `backend/test/api-spec.test.js` compares the endpoints written in `docs/api-spec.md` with the routes declared in `backend/src/routes`, in both
 directions, and calls every documented endpoint on a running server to confirm it exists. Changing a route's path in the code makes it fail. It checks
 that paths and methods agree, not that every field of every response is documented.
+
+### D44. The SQL is checked statically as Snowflake SQL, because no account was available
+The owner's Snowflake trial had expired, so the suite could not be run there (`docs/snowflake-run.md` stays as the way to do it). The next best
+evidence is a static one, added to `npm run validate` (`validation/sql_static.py`, using the open-source `sqlglot` parser, pinned in
+`validation/requirements.txt`): (1) every script parses in Snowflake's dialect; (2) every table and column the query scripts use is looked up in the
+schema defined by `00_schema.sql` (script 10's output columns become the table that 11 to 14 read), including a check that every table exists, which the
+library does not do by itself; (3) each generated CSV is matched to the table it would be loaded into, column for column and in order, since a mismatch
+there would load the wrong data without an error; (4) four self-tests show the checker rejects a mistyped keyword, a misspelt column and an unknown
+table, and accepts a correct query. It runs in CI inside a virtual environment, where a missing package is a failure; locally it is skipped with a note.
+
+Checked: six deliberate mistakes in a copy of the SQL (a misspelt column, an unknown table, a lost bracket, two schema renames, a mistyped keyword),
+each caught by this check on its own with a message that names the problem.
+
+**What it does not show.** It runs nothing. It cannot show that Snowflake accepts every function and type as the parser does, or that the results
+are right. The parser is lenient: it accepted an empty `PARTITION BY`, which is not valid, so a pass means "no typos, mismatches or malformed structure
+that the parser can see", not "valid on Snowflake". The honest claim is: written in a portable subset, tested on SQLite with hand-worked fixtures,
+re-derived independently in Python, checked statically as Snowflake SQL, and never run on Snowflake.
 
 ## Open assumptions (to confirm in later phases)
 - `sql/00_schema.sql` and `sql/10-14*.sql` have not been run against a live Snowflake account.

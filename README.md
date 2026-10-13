@@ -14,11 +14,11 @@ Storage product; the palette is inspired by their website and the layout by a pu
 | Part | State |
 |---|---|
 | Data cleaning, quarantine, simulated Snowflake logs | done |
-| Cost allocation SQL suite and reconciliation | done; **never run on a real Snowflake account** ([how to](docs/snowflake-run.md)) |
+| Cost allocation SQL suite and reconciliation | done; checked statically as Snowflake SQL, but **never run on a real Snowflake account** ([how to](docs/snowflake-run.md)) |
 | REST API with login and three roles (admin, owner, viewer) | done; a test keeps the spec and the routes identical |
 | Real-time alerting over WebSocket, with replay on reconnect | done |
 | React dashboard: overview, fleet map, reports, alerts, costs, orphans, data quality | done, with charts |
-| Independent validation in Python: 42 checks, every headline number | done, passing ([report](validation/REPORT.md)) |
+| Independent validation in Python: 63 checks (every headline number, plus the SQL checked as Snowflake SQL) | done, passing ([report](validation/REPORT.md)) |
 | "Explain this alert": AI or rule-written, checked against the data, held for a person if unverifiable | done; run on four free local models (10 alerts each), **never on a hosted one** |
 
 On GitHub (private for now). The first CI run there, on a clean Ubuntu machine, passed all three jobs: the data-drift check, 223 backend tests, the

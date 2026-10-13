@@ -31,7 +31,7 @@ do not have to sign out and in. Passwords are in `backend/config/demo-users.json
    words "Suggestions only. Nothing is done automatically." Say who wrote it (rules unless an AI is switched on) and that anything that cannot be
    checked against the data is held for an admin on the AI review page, and anything that contradicts the data is withheld.
 7. **Prove it (45 s).** In a terminal run `npm run validate`: a separate Python program re-derives the numbers from the raw CSV and compares them with the app
-   (42 checks). Say what it does not show: same author, same written rules, and the SQL has not run on a real Snowflake account.
+   (63 checks). Say what it does not show: same author, same written rules, and the SQL has not run on a real Snowflake account.
 8. **Close (30 s).** Open `docs/brief-map.md`: every requirement in the brief and where it is met, including what is not done.
 
 ## If something goes wrong

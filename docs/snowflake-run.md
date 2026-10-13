@@ -8,6 +8,10 @@ that is a finding: record the error in `docs/validation-findings.md` rather than
 A free trial account is enough (Snowflake offers one; check its current terms and region options). Use the web interface (Snowsight) so nothing
 needs installing.
 
+**No account?** The owner's own trial had expired when this project was finished, so the suite has not been run there. What was done instead is a
+static check: `npm run validate` parses every script as Snowflake SQL, looks up every table and column in the schema, and matches each CSV to its
+table (`validation/sql_static.py`). That catches typos and loading mismatches; it does not run anything and does not show the results are right.
+
 ## 1. Create the objects
 
 1. Open a SQL worksheet with a role that can create a database (the trial's default does).

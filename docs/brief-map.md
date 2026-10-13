@@ -29,7 +29,7 @@ Status is only "done" when there is code and a test or a reproducible command be
 | # | Addition | Why | Where | Status |
 |---|---|---|---|---|
 | E1 | AI explanations of alerts, validated against the data, with a human-review queue | The role is about validating AI output (decision D32) | `backend/src/triage/`, `frontend/src/pages/AiReview.jsx` | built and tested; run on a local 7B model (10 alerts), **no hosted model run** |
-| E3 | Independent Python validation of every headline number, a findings log, and a Snowflake run guide | The role is about independently rerunning analytics and documenting discrepancies (decision D40) | `validation/`, `docs/validation-findings.md`, `docs/snowflake-run.md` | built; 42 checks pass; the Snowflake run itself is **not done** |
+| E3 | Independent Python validation of every headline number, a findings log, and a Snowflake run guide | The role is about independently rerunning analytics and documenting discrepancies (decision D40) | `validation/`, `docs/validation-findings.md`, `docs/snowflake-run.md` | built; 63 checks pass; the SQL is checked statically as Snowflake SQL, but the Snowflake run itself is **not done** |
 | E2 | Charts and a more visual interface: rings, bars, line, scatter, fleet map | A command center is read at a glance (decision D39) | `frontend/src/components/charts/`, `docs/design-system.md` | built and tested; presentation of existing data, no backend change |
 
 ## Evaluator rubric headings
@@ -39,7 +39,7 @@ Status is only "done" when there is code and a test or a reproducible command be
 | Full-stack web architecture | Tiered design (`architecture.md`); API with RBAC; React app served from the same origin with a strict CSP |
 | Real-time alerting and telemetry | Engine, hub, replay and reconnect tested; live feed in the dashboard verified in a real browser |
 | Cloud cost SQL attribution | Done and independently verified (Python re-implementation matches) |
-| Code quality and system docs | 456 tests (223 backend, 233 frontend), both mutation-checked, plus 42 independent Python checks; decision log D1-D43; README, spec and design docs |
+| Code quality and system docs | 456 tests (223 backend, 233 frontend), both mutation-checked, plus 63 independent Python checks; decision log D1-D43; README, spec and design docs |
 
 ## Disqualifiers and rules
 

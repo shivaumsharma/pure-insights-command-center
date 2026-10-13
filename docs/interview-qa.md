@@ -88,7 +88,7 @@ early look, not page by page. The alert-noise totals grow because the replay loo
 
 ## 13. How do you know your numbers are right?
 I do not just trust them; a separate Python program, sharing no code with the app, re-derives them from the raw CSV and compares item by item: the
-cleaning, every one of the alerts, the credit attribution, the cost per view, the hosting-cost flags and the explanations (`npm run validate`, 42
+cleaning, every one of the alerts, the credit attribution, the cost per view, the hosting-cost flags and the explanations (`npm run validate`, 63
 checks). I broke the app in 13 ways to check the validator fails when it should. It also checks every number my README quotes.
 *Be honest about:* I wrote both sides from the same written rules, so it catches slips and drift, not a wrong reading of the brief; and the SQL was
 compared through a SQLite stand-in, never on Snowflake (`docs/snowflake-run.md` is how to do that).
