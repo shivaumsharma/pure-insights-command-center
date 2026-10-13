@@ -483,3 +483,19 @@ paging, its role check, its documentation); one survived at first because the te
 ## Open assumptions (to confirm in later phases)
 - `sql/00_schema.sql` and `sql/10-14*.sql` have not been run against a live Snowflake account.
 - `credit_price_usd`, `variance_tolerance_pct` (10) and `aws_mismatch_ratio` (3) are placeholders, not agreed business values.
+
+### D46. Explanations are decided and read where they are asked for
+The owner tried "Explain" and found it did not work as intended: the explanation was held back, and to see or approve it you had to go to a separate page.
+That was designed from the checker's side. With a small local model most explanations are held (llama3.1:8b passed 6 of 10 on the evaluation set, the
+others fewer), which leaves a viewer with nothing and an admin with a detour. Changes:
+- **A checked answer stands in.** If the AI's answer is held or withheld but the rule-based answer for the same alert passed the same checks, the service
+  keeps it (`alternative`) and everyone else sees it, labelled "Rule-based explanation, checked against the data". The AI's own answer stays hidden from
+  non-admins, so nothing unchecked is shown. If the rules have nothing to say either, the old message is all there is, and no evidence leaks.
+- **Admins decide on the alert.** The same Approve and Dismiss controls (one component) are on the alert and on the review page. A suggestion that
+  contradicts the data still cannot be approved.
+- **"How it was checked" is shown.** The validator's 18 finding codes are grouped into seven plain questions (`triage/checks.js`). A test fails if the
+  validator raises a code no group owns. The summary is closed when everything passed and open when something did not, with a symbol and words, never colour alone.
+- **The wait is visible.** A counter in seconds, and after five seconds a note that an AI model can take 10 to 30 seconds.
+- **The review page leads with "Needs your decision"**, then "How the AI is doing". When nothing is waiting it links to Alerts.
+Checked: 13 backend tests and 12 frontend tests added; 8 deliberate breakages of the stand-in and checklist logic (who sees what, when the stand-in applies) were each caught; 14 deliberate breakages of the new frontend code (gating, note, open/closed, timer, hint, evidence, link,
+icons) were each caught by a test, after tests were strengthened for four that first survived (the evidence tooltip, a closed summary when all pass, distinct symbols, buttons for non-admins).

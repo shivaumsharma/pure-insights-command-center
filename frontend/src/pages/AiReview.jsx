@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { StackBars } from '../components/charts/StackBars.jsx';
-import { Findings, STATUS_LABEL_TRIAGE, SuggestionView, authorLine } from '../components/SuggestionView.jsx';
-import { Badge, Button, Card, DataTable, EmptyState, ErrorBox, Field, Kpi, PageHeader, Skeleton } from '../components/ui.jsx';
+import { ReviewActions } from '../components/ReviewActions.jsx';
+import { CheckSummary, Findings, SuggestionView, authorLine } from '../components/SuggestionView.jsx';
+import { Badge, Card, DataTable, EmptyState, ErrorBox, Kpi, PageHeader, Skeleton } from '../components/ui.jsx';
 import { fmtInt } from '../lib/format.js';
 import { useQuery } from '../lib/useQuery.js';
 
@@ -29,33 +30,14 @@ const CODE_HELP = {
 };
 
 function ReviewItem({ item, onDone }) {
-  const { api } = useAuth();
-  const [note, setNote] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(null);
   const contradicted = item.validation === 'REJECTED';
-  const [tone, label] = STATUS_LABEL_TRIAGE[item.status] ?? ['neutral', item.status];
-
-  async function decide(decision) {
-    setBusy(true);
-    setError(null);
-    try {
-      await api.post(`/api/triage/${item.event_id}/review`, { decision, note: note.trim() || undefined });
-      onDone();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
     <article className="card review-item" aria-labelledby={`rev-${item.event_id}`}>
       <h3 id={`rev-${item.event_id}`}>
         <Link to={`/reports/${item.report_id}`}>{item.report_id}</Link> <span className="muted small">alert {item.event_id}</span>{' '}
         <Badge tone={contradicted ? 'danger' : 'warning'}>{contradicted ? 'Contradicts the data' : 'Could not be verified'}</Badge>
       </h3>
-      <p className="muted small">{authorLine(item)} Status shown to others: <Badge tone={tone}>{label}</Badge></p>
+      <p className="muted small">{authorLine(item)} Until you decide, others see {item.alternative ? 'the rule-based explanation' : 'nothing for this alert'}.</p>
 
       <h4>Why it was held</h4>
       <Findings findings={item.findings} />
@@ -64,16 +46,9 @@ function ReviewItem({ item, onDone }) {
         <summary>See the suggestion and its evidence</summary>
         <SuggestionView data={item} />
       </details>
+      <CheckSummary checks={item.checks} />
 
-      {contradicted && <p className="hint">This suggestion is false against the data, so it cannot be approved. It can be dismissed.</p>}
-      <div className="form-row">
-        <Field id={`note-${item.event_id}`} label="Note (optional)">
-          <input id={`note-${item.event_id}`} value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} />
-        </Field>
-        <Button disabled={busy || contradicted} onClick={() => decide('approve')} aria-label={`Approve the suggestion for alert ${item.event_id}`}>Approve and show it</Button>
-        <Button variant="secondary" disabled={busy} onClick={() => decide('dismiss')} aria-label={`Dismiss the suggestion for alert ${item.event_id}`}>Dismiss</Button>
-      </div>
-      {error && <p className="field-error" role="alert">{error}</p>}
+      <ReviewActions item={item} onDone={onDone} />
     </article>
   );
 }
@@ -95,9 +70,20 @@ export default function AiReview() {
     <>
       <PageHeader
         title="AI review"
-        description="Every explanation is checked against the data before anyone sees it. What could not be verified waits here for a person."
+        description="Every explanation is checked against the data before anyone sees it. Anything the checks could not confirm waits here for you to approve or dismiss."
       />
 
+      <h2>Needs your decision{queue.data && queue.data.data.length > 0 ? ` (${queue.data.data.length})` : ''}</h2>
+      <ErrorBox error={queue.error} onRetry={queue.reload} />
+      {!queue.data && !queue.error && <Skeleton rows={3} />}
+      {queue.data && queue.data.data.length === 0 && (
+        <EmptyState icon="check" title="Nothing is waiting.">
+          Explanations that pass the checks are shown straight away. To see one, open an alert and choose Explain: <Link to="/alerts">go to Alerts</Link>.
+        </EmptyState>
+      )}
+      {queue.data && queue.data.data.map((item) => <ReviewItem key={item.event_id} item={item} onDone={refresh} />)}
+
+      <h2>How the AI is doing</h2>
       <ErrorBox error={stats.error} onRetry={stats.reload} />
       {!s && !stats.error && <Skeleton rows={2} />}
       {s && (
@@ -156,13 +142,6 @@ export default function AiReview() {
         </>
       )}
 
-      <h2>Waiting for a person</h2>
-      <ErrorBox error={queue.error} onRetry={queue.reload} />
-      {!queue.data && !queue.error && <Skeleton rows={3} />}
-      {queue.data && queue.data.data.length === 0 && (
-        <EmptyState icon="check" title="Nothing is waiting.">Explanations that pass the checks are shown straight away. Open an alert and choose Explain to generate one.</EmptyState>
-      )}
-      {queue.data && queue.data.data.map((item) => <ReviewItem key={item.event_id} item={item} onDone={refresh} />)}
     </>
   );
 }

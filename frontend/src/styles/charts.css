@@ -134,3 +134,19 @@ a.tile:hover { border-color: currentColor; transform: translateY(-2px); }
 .scatter .refline-main { stroke: var(--pi-text); }
 .scatter .refline-edge { stroke: var(--pi-text-muted); stroke-dasharray: 5 4; }
 .scatter .pt-faint { fill-opacity: 0.45; }
+
+/* ---- Explanations: how it was checked, the rule-based stand-in, and the wait ---- */
+.check-summary { margin-top: var(--pi-space-2); }
+.check-summary summary { font-size: var(--pi-text-sm); color: var(--pi-text-muted); }
+.checks { list-style: none; margin: var(--pi-space-2) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--pi-space-1); font-size: var(--pi-text-sm); }
+.checks li { display: flex; gap: var(--pi-space-2); align-items: flex-start; }
+.checks li .icon { margin-top: 3px; }
+.checks li[data-result='OK'] .icon { color: var(--pi-success); }
+.checks li[data-result='UNVERIFIED'] .icon { color: var(--pi-warning); }
+.checks li[data-result='FALSE'] .icon { color: var(--pi-danger); }
+.alternative { margin-top: var(--pi-space-3); padding-top: var(--pi-space-3); border-top: 1px solid var(--pi-border-strong); display: flex; flex-direction: column; gap: var(--pi-space-2); }
+.alternative h4 { margin: 0; font-size: var(--pi-text-sm); font-weight: 600; }
+.working { display: flex; flex-wrap: wrap; align-items: center; gap: var(--pi-space-2); padding: var(--pi-space-2) 0; }
+.spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--pi-border-strong); border-top-color: var(--pi-brand-strong); animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.review-actions { margin-top: var(--pi-space-3); }

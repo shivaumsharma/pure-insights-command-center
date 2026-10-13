@@ -70,7 +70,7 @@ restart because event numbers started over. Neither is visible to a unit test on
 I do not trust it; I check it. The AI gets a small pack of numbered facts about the alert and must cite which fact each claim comes from, and
 the value it read. A checker then compares every citation with the real data, tests each cause against a simple data rule, and rejects numbers
 that are not in the evidence. A false suggestion is withheld, one that cannot be verified waits for a person, and only one that passes is shown,
-with its evidence. It is also labelled as written by an AI. A rule-based version with no AI is the control, so a model can be compared with it.
+with its evidence and a list of how it was checked. It is also labelled as written by an AI. When the AI's answer is held back, everyone else sees the rule-based answer for the same alert if that passed the checks, labelled as rule-based, and an admin can approve or dismiss the AI's answer on the alert itself. A rule-based version with no AI is the control, so a model can be compared with it.
 *Be honest about:* I ran it on four small free models on my laptop, 10 alerts each. Passed the checks: Llama 3.1 8B 6, Gemma 2 9B 3, Qwen 7B 0 (8 rejected, 2 held),
 Qwen 1.5B 0. The largest model was not the best one. The rule-based version passed 9 of the same 10. That is a small, untuned sample, not a claim about AI in general. I never ran a hosted
 model (no key). The checker catches the mistakes I thought of, not every possible one, and "passed" means checked against the evidence, not

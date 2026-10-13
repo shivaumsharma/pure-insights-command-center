@@ -12,6 +12,8 @@ const PATHS = {
   refresh: 'M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5',
   layers: 'M12 3l9 5-9 5-9-5zM3 13l9 5 9-5M3 17.5l9 5 9-5',
   check: 'M5 12.5l4.5 4.5L19 7.5',
+  cross: 'M6.5 6.5l11 11M17.5 6.5l-11 11',
+  help: 'M9.4 9.6a2.7 2.7 0 1 1 3.9 2.4c-.9.5-1.3 1.1-1.3 2M12 17.6v.1',
 };
 
 export function Icon({ name, size = 20, className = '' }) {

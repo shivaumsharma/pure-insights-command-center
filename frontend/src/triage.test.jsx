@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { alert, baseRoutes, page, renderApp } from './test/harness.jsx';
 
 const evidence = {
@@ -150,6 +150,118 @@ describe('Explain this alert', () => {
 
 // ------------------------------------------------------------------ admin review page
 
+const okChecks = [
+  { id: 'shape', label: 'It has the required shape', result: 'OK' },
+  { id: 'cites', label: 'Every number it quotes matches the data', result: 'OK' },
+];
+const stand = { triager: 'baseline', model: null, status: 'TRUSTED', suggestion, checks: okChecks };
+const withheldView = (extra = {}) => ({
+  id: 'T-1', event_id: 1, report_id: 'RPT_201', status: 'WITHHELD', triager: 'ollama', model: 'llama3.1:8b', created_at: 'x', evidence, alternative: stand,
+  message: 'The AI produced an explanation but it did not match the data, so it was withheld. The rule-based explanation, which was checked against the data, is shown instead.', ...extra,
+});
+const adminHeld = (extra = {}) => ({
+  id: 'T-1', event_id: 1, report_id: 'RPT_201', status: 'UNDER_REVIEW', validation: 'NEEDS_REVIEW', triager: 'ollama', model: 'llama3.1:8b', created_at: 'x',
+  suggestion, evidence, alternative: stand, review: { state: 'pending', by: null, at: null, note: null },
+  checks: [{ id: 'shape', label: 'It has the required shape', result: 'OK' }, { id: 'causes', label: 'Each cause is supported by the data', result: 'UNVERIFIED' }],
+  findings: [{ code: 'OTHER_UNVERIFIABLE', severity: 'review', message: 'This cause cannot be checked against the data.', where: 'causes[0]' }], ...extra,
+});
+
+describe('Explain this alert: the checked answer stands in, and decisions happen on the alert', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('a viewer whose AI answer was withheld gets the rule-based one, labelled as such, with how it was checked, and no buttons', async () => {
+    renderApp({ role: 'viewer', path: '/alerts', routes: alertsRoutes({ data: withheldView() }) });
+    const history = await openExplain();
+    const section = await within(history).findByRole('region', { name: 'Rule-based explanation' });
+    expect(within(section).getByText('Rule-based explanation, checked against the data')).toBeInTheDocument();
+    expect(within(section).getByText('High query volume')).toBeInTheDocument();
+    expect(within(section).getByText('How it was checked: all 2 checks passed')).toBeInTheDocument();
+    expect(within(history).getByText(/is shown instead/)).toBeInTheDocument();
+    expect(within(history).queryByRole('button', { name: /Approve|Dismiss/ })).toBeNull();
+    expect(within(history).queryByText("See the AI's suggestion and its evidence")).toBeNull();
+    expect(within(section).getAllByText('O1 · query_count_last_30d = 21000')[0]).toHaveAttribute('title', 'The reading that raised the alert'); // the evidence its claims cite comes with it
+  });
+
+  it('buttons are for admins only, even if a response ever carried review data (defence in depth)', async () => {
+    renderApp({ role: 'viewer', path: '/alerts', routes: alertsRoutes({ data: adminHeld() }) });
+    const history = await openExplain();
+    await within(history).findByRole('region', { name: 'Rule-based explanation' });
+    expect(within(history).queryByRole('button', { name: /Approve|Dismiss/ })).toBeNull();
+  });
+
+  it('a shown suggestion lists how it was checked', async () => {
+    renderApp({ role: 'viewer', path: '/alerts', routes: alertsRoutes({ data: view({ checks: okChecks }) }) });
+    const history = await openExplain();
+    const summary = await within(history).findByText('How it was checked: all 2 checks passed');
+    expect(summary.closest('details')).not.toHaveAttribute('open'); // nothing to look at when everything passed
+    const list = within(history).getByRole('list', { name: 'How it was checked', hidden: true });
+    expect(within(list).getAllByRole('listitem', { hidden: true })).toHaveLength(2);
+  });
+
+  it('a check that did not pass is open by default and says so in words, not colour alone', async () => {
+    renderApp({ role: 'admin', path: '/alerts', routes: alertsRoutes({ data: adminHeld() }) });
+    const history = await openExplain();
+    const summary = await within(history).findByText('How it was checked: 1 of 2 did not pass');
+    expect(within(history).getByText('(could not be checked against the data)')).toBeInTheDocument();
+    expect(summary.closest('details')).toHaveAttribute('open');
+    const [passed, unverified] = within(history).getAllByRole('listitem', { hidden: true }).filter((li) => li.dataset.result);
+    expect(passed.dataset.result).toBe('OK');
+    expect(unverified.dataset.result).toBe('UNVERIFIED');
+    expect(passed.querySelector('path').getAttribute('d')).not.toBe(unverified.querySelector('path').getAttribute('d')); // a different symbol, not only a different colour
+  });
+
+  it('an admin decides on the alert itself: approve sends the note, then the panel reloads', async () => {
+    let state = adminHeld();
+    const { fetchImpl } = renderApp({
+      role: 'admin', path: '/alerts',
+      routes: { ...alertsRoutes(() => ({ status: 200, body: { data: state } })), 'POST /api/triage/1/review': () => { state = view({ status: 'APPROVED', triager: 'ollama', model: 'llama3.1:8b' }); return { status: 200, body: { data: state } }; } },
+    });
+    const history = await openExplain();
+    expect(await within(history).findByText('Why it was held (1)')).toBeInTheDocument();
+    await userEvent.type(within(history).getByLabelText('Note (optional)'), 'Looks right');
+    await userEvent.click(within(history).getByRole('button', { name: 'Approve the suggestion for alert 1' }));
+    await waitFor(() => expect(fetchImpl.callsTo('POST', '/api/triage/1/review')[0].body).toEqual({ decision: 'approve', note: 'Looks right' }));
+    expect(await within(history).findByText('Approved by a person')).toBeInTheDocument();
+    expect(within(history).queryByRole('button', { name: /Approve the suggestion/ })).toBeNull();
+    expect(fetchImpl.callsTo('GET', '/api/alerts/1/triage')).toHaveLength(2);
+  });
+
+  it('an admin can dismiss from the alert, and a contradicted suggestion cannot be approved there', async () => {
+    const rejected = adminHeld({ status: 'WITHHELD', validation: 'REJECTED' });
+    const { fetchImpl } = renderApp({ role: 'admin', path: '/alerts', routes: { ...alertsRoutes({ data: rejected }), 'POST /api/triage/1/review': { data: rejected } } });
+    const history = await openExplain();
+    expect(await within(history).findByRole('button', { name: 'Approve the suggestion for alert 1' })).toBeDisabled();
+    await userEvent.click(within(history).getByRole('button', { name: 'Dismiss the suggestion for alert 1' }));
+    await waitFor(() => expect(fetchImpl.callsTo('POST', '/api/triage/1/review')[0].body).toEqual({ decision: 'dismiss' }));
+  });
+
+  it('an admin sees both the AI answer and the rule-based one that everyone else gets', async () => {
+    renderApp({ role: 'admin', path: '/alerts', routes: alertsRoutes({ data: adminHeld() }) });
+    const history = await openExplain();
+    expect(await within(history).findByText("See the AI's suggestion and its evidence")).toBeInTheDocument();
+    expect(within(history).getByText('What everyone else sees instead: the rule-based explanation')).toBeInTheDocument();
+  });
+
+  it('once decided there are no buttons', async () => {
+    renderApp({ role: 'admin', path: '/alerts', routes: alertsRoutes({ data: adminHeld({ status: 'DISMISSED', review: { state: 'dismissed', by: 'a', at: 'x', note: null } }) }) });
+    const history = await openExplain();
+    await within(history).findByText('Dismissed');
+    expect(within(history).queryByRole('button', { name: /Approve the suggestion/ })).toBeNull();
+  });
+
+  it('while it is working, the wait is counted in seconds and a hint appears after a few', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    renderApp({ role: 'viewer', path: '/alerts', routes: alertsRoutes(() => new Promise(() => {})) });
+    const history = await screen.findByRole('list', { name: 'Alert history' });
+    await userEvent.setup({ advanceTimers: vi.advanceTimersByTime }).click(within(history).getByRole('button', { name: /Explain alert 1/ }));
+    const status = await within(history).findByRole('status');
+    expect(status).toHaveTextContent(/Writing the explanation and checking it against the data… \d s/);
+    expect(status).not.toHaveTextContent('10 to 30 seconds');
+    await vi.advanceTimersByTimeAsync(6000);
+    expect(status).toHaveTextContent('An AI model can take 10 to 30 seconds.');
+  });
+});
+
 const held = (id, extra = {}) => ({
   id: `T-${id}`, event_id: id, report_id: 'RPT_201', status: 'UNDER_REVIEW', validation: 'NEEDS_REVIEW', triager: 'anthropic', model: 'claude-opus-5-5', created_at: 'x',
   suggestion, evidence, usage: null, baseline_validation: 'TRUSTED', review: { state: 'pending', by: null, at: null, note: null },
@@ -179,6 +291,24 @@ describe('AI review page', () => {
     expect(screen.getByText(/The AI was unavailable 2 times, so rules answered instead/)).toBeInTheDocument();
     expect(screen.getByText('A cause the data cannot confirm')).toBeInTheDocument();
     expect(screen.getByText('Nothing is waiting.')).toBeInTheDocument();
+  });
+
+  it('puts what needs a decision first and the statistics after', async () => {
+    renderApp({ role: 'admin', path: '/ai-review', routes: reviewRoutes([held(7)]) });
+    const decide = await screen.findByRole('heading', { name: 'Needs your decision (1)' });
+    const doing = screen.getByRole('heading', { name: 'How the AI is doing' });
+    expect(decide.compareDocumentPosition(doing) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText(/Until you decide, others see nothing for this alert/)).toBeInTheDocument();
+  });
+
+  it('says which explanation others see meanwhile when the rule-based one stands in', async () => {
+    renderApp({ role: 'admin', path: '/ai-review', routes: reviewRoutes([held(7, { alternative: { triager: 'baseline', suggestion, checks: [] } })]) });
+    expect(await screen.findByText(/others see the rule-based explanation/)).toBeInTheDocument();
+  });
+
+  it('with nothing waiting it links to the alerts, where explanations are made', async () => {
+    renderApp({ role: 'admin', path: '/ai-review', routes: reviewRoutes([]) });
+    expect(await screen.findByRole('link', { name: 'go to Alerts' })).toHaveAttribute('href', '/alerts');
   });
 
   it('approving sends the decision and the note, then refreshes the queue', async () => {

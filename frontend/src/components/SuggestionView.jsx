@@ -1,3 +1,4 @@
+import { Icon } from './Icon.jsx';
 import { Badge } from './ui.jsx';
 
 export const CAUSE_LABEL = {
@@ -99,6 +100,28 @@ export function SuggestionView({ data }) {
         </>
       )}
     </div>
+  );
+}
+
+// How the suggestion was checked, one line per question. The result is a symbol and words, never colour alone. Open by default only when
+// something did not pass.
+const CHECK_ICON = { OK: 'check', UNVERIFIED: 'help', FALSE: 'cross' };
+const CHECK_NOTE = { UNVERIFIED: 'could not be checked against the data', FALSE: 'the data contradicts it' };
+export function CheckSummary({ checks }) {
+  if (!checks?.length) return null;
+  const failed = checks.filter((c) => c.result !== 'OK').length;
+  return (
+    <details className="check-summary" open={failed > 0}>
+      <summary>{failed === 0 ? `How it was checked: all ${checks.length} checks passed` : `How it was checked: ${failed} of ${checks.length} did not pass`}</summary>
+      <ul className="checks" aria-label="How it was checked">
+        {checks.map((c) => (
+          <li key={c.id} data-result={c.result}>
+            <Icon name={CHECK_ICON[c.result]} size={16} />
+            <span>{c.label}{c.result !== 'OK' && <span className="muted"> ({CHECK_NOTE[c.result]})</span>}</span>
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }
 

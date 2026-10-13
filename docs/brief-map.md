@@ -39,7 +39,7 @@ Status is only "done" when there is code and a test or a reproducible command be
 | Full-stack web architecture | Tiered design (`architecture.md`); API with RBAC; React app served from the same origin with a strict CSP |
 | Real-time alerting and telemetry | Engine, hub, replay and reconnect tested; live feed in the dashboard verified in a real browser |
 | Cloud cost SQL attribution | Done and independently verified (Python re-implementation matches) |
-| Code quality and system docs | 472 tests (227 backend, 245 frontend), both mutation-checked, plus 68 independent Python checks; decision log D1-D43; README, spec and design docs |
+| Code quality and system docs | 497 tests (240 backend, 257 frontend), both mutation-checked, plus 68 independent Python checks; decision log D1-D46; README, spec and design docs |
 
 ## Disqualifiers and rules
 

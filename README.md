@@ -37,7 +37,7 @@ npm start               # everything on http://localhost:3101
 Sign in with a demo account from `backend/config/demo-users.json` (admin, two owners, one viewer). Each role sees different pages.
 The "Explain" button uses rules by default. For a free local model: install [Ollama](https://ollama.com), run `ollama pull llama3.1:8b`, then
 `AI_PROVIDER=ollama AI_MODEL=llama3.1:8b npm start` (PowerShell: set `$env:AI_PROVIDER` and `$env:AI_MODEL` first). Evidence stays on your computer.
-Other commands: `npm run test:all` (472 tests), `npm run validate` (needs Python 3: re-derives the numbers from the raw CSV and compares),
+Other commands: `npm run test:all` (497 tests), `npm run validate` (needs Python 3: re-derives the numbers from the raw CSV and compares),
 `npm run smoke` (starts the whole product and checks it end to end), `npm run smoke:restart`, `npm run triage:eval` (add `--llm --provider ollama` to
 try a local model), `npm run web:dev` (hot reload on :5173), `npm run cost:build`.
 All money is US dollars, because the data's cost column is `aws_hosting_cost_usd`. Snowflake credits convert at a placeholder $3.

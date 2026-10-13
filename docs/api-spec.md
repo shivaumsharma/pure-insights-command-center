@@ -136,6 +136,10 @@ Explanations are written by a hosted model (`AI_PROVIDER=anthropic`), a model on
 no content for non-admins), `WITHHELD` (contradicted the data; no content for non-admins), `DISMISSED`. When shown, `suggestion` holds
 `summary`, `causes[]` (a fixed kind, a claim, `cites[]` of `{ evidence, field, value }`, confidence) and `actions[]`, and `evidence` holds the
 numbered datapoints the citations point at. Admins also get `validation`, `findings[]` (code, severity, message, where) and `review`.
+Whoever sees a suggestion also gets `checks[]`: one line per question the checker asked (`id`, a plain `label`, and `result` = `OK`, `UNVERIFIED`
+(could not be checked against the data) or `FALSE` (the data contradicts it)). For a shown suggestion every line is `OK`. When the AI's answer is not
+shown but the rule-based answer for the same alert passed the same checks, the response carries it as `alternative` (`triager: "baseline"`, `status`,
+`suggestion`, `checks`) together with `evidence`, and `message` says it is shown instead (decision D46). The AI's own answer stays hidden from non-admins.
 `triager` is `baseline` (rules), `anthropic` (hosted model) or `ollama` (local model); `model` names it. `fallback` (`{ "from": "<triager>" }`) is
 present when the model failed and rules answered; the reason is kept server-side and counted in the stats.
 

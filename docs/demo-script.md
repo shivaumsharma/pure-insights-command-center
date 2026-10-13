@@ -29,7 +29,7 @@ do not have to sign out and in. Passwords are in `backend/config/demo-users.json
    refetches them instead.) Then show a wrong password on the sign-in page.
 6. **Explain an alert (60 s).** On Alerts, choose Explain on an open alert: the suggestion appears with the evidence behind every claim and the
    words "Suggestions only. Nothing is done automatically." Say who wrote it (rules unless an AI is switched on) and that anything that cannot be
-   checked against the data is held for an admin on the AI review page, and anything that contradicts the data is withheld.
+   checked against the data is held for an admin, and anything that contradicts the data is withheld. Open "How it was checked" to show the list. If the AI's answer is held, show that a viewer gets the rule-based explanation instead (labelled), and that an admin can Approve or Dismiss right on the alert (the AI review page lists the same decisions, and the statistics).
 7. **Prove it (45 s).** In a terminal run `npm run validate`: a separate Python program re-derives the numbers from the raw CSV and compares them with the app
    (68 checks). Say what it does not show: same author, same written rules, and the SQL has not run on a real Snowflake account.
 8. **Close (30 s).** Open `docs/brief-map.md`: every requirement in the brief and where it is met, including what is not done.
