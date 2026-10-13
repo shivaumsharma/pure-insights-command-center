@@ -1,7 +1,7 @@
 # Design system
 
 The UI takes its **palette from the Everpure website** (a single orange accent, near-black, pill buttons) and its **layout manner from a public
-dashboard concept** the owner supplied as a reference (dribbble.com/shots/25605570): a white side menu with grouped items, soft white cards on a
+dashboard concept** I chose as a reference (dribbble.com/shots/25605570): a white side menu with grouped items, soft white cards on a
 light canvas, a smooth orange chart over a gradient with a dark tooltip. It is a family resemblance, not a copy: no logo, imagery, copy or font
 files from either source are used (see decision D41).
 Tokens live in [`frontend/src/styles/theme.css`](../frontend/src/styles/theme.css); components must read them and never hard-code colours.

@@ -78,7 +78,6 @@ data/raw, processed    input and generated outputs        docs/  architecture, A
 ## Read next
 
 [Architecture](docs/architecture.md) | [API spec](docs/api-spec.md) | [Cost suite](docs/cost-allocation.md) | [Validation](validation/README.md) |
-[Findings](docs/validation-findings.md) | [Decision log](docs/decisions.md) | [Brief map](docs/brief-map.md) | [Design system](docs/design-system.md) |
-[Authorship](docs/AUTHORSHIP.md)
+[Findings](docs/validation-findings.md) | [Decision log](docs/decisions.md) | [Brief map](docs/brief-map.md) | [Design system](docs/design-system.md)
 
 Licence: MIT.

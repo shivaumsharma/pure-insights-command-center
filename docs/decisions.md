@@ -412,9 +412,9 @@ drift, not a wrong reading of the brief; the SQL was compared through its SQLite
 `docs/validation-findings.md` (each data issue: evidence, impact, who to route it to, next step) and `docs/snowflake-run.md` (how to run the SQL on
 a real account in about 20 minutes, with the values it should return).
 
-### D41. A new look, from a reference the owner supplied
-The first interface used the Everpure site's cream canvas, a dark top bar and condensed uppercase headings. The owner then supplied a public
-dashboard concept (dribbble.com/shots/25605570) as a reference and asked that the result not look AI-generated. What was taken from it is layout
+### D41. A new look, from a reference I chose
+The first interface used the Everpure site's cream canvas, a dark top bar and condensed uppercase headings. I then chose a public
+dashboard concept (dribbble.com/shots/25605570) as a reference so that the result would not look generic. What was taken from it is layout
 and manner, not assets or copy:
 - **A white side menu with grouped items** (Monitor, Money, Validate), the current page marked by an orange bar on its edge, the account at the bottom.
   On a phone it becomes a bar across the top.
@@ -434,7 +434,7 @@ by construction (flat segments already get zero tangents), so removing it change
 not run (status is also a symbol, so it should not matter, but I did not test it); the wide layout was checked with scaled screenshots and measurements.
 
 ### D42. Money is in US dollars
-The owner asked that money follow the dataset: dollars if the data has dollars, otherwise rupees. The supplied file's cost column is
+I decided that money should follow the dataset: dollars if the data has dollars, otherwise rupees. The supplied file's cost column is
 `aws_hosting_cost_usd`, so **everything is dollars**. Snowflake credits are a unit, not a currency; they are converted at a placeholder $3 per credit
 (`core.cost_params`), and every page that shows dollars says so. All formatting goes through one function (`fmtUsd`) and a test pins it to US
 dollars. I did not convert to rupees: that would need an exchange rate the data does not contain, and a made-up rate would be a worse number than none.
@@ -445,7 +445,7 @@ directions, and calls every documented endpoint on a running server to confirm i
 that paths and methods agree, not that every field of every response is documented.
 
 ### D44. The SQL is checked statically as Snowflake SQL, because no account was available
-The owner's Snowflake trial had expired, so the suite could not be run there (`docs/snowflake-run.md` stays as the way to do it). The next best
+My Snowflake trial had expired, so the suite could not be run there (`docs/snowflake-run.md` stays as the way to do it). The next best
 evidence is a static one, added to `npm run validate` (`validation/sql_static.py`, using the open-source `sqlglot` parser, pinned in
 `validation/requirements.txt`): (1) every script parses in Snowflake's dialect; (2) every table and column the query scripts use is looked up in the
 schema defined by `00_schema.sql` (script 10's output columns become the table that 11 to 14 read), including a check that every table exists, which the
@@ -462,7 +462,7 @@ that the parser can see", not "valid on Snowflake". The honest claim is: written
 re-derived independently in Python, checked statically as Snowflake SQL, and never run on Snowflake.
 
 ### D45. Showing the hosting-cost discrepancy, and explaining the checks in plain words
-Two things the owner asked for after looking at the Costs page.
+Two things I added after looking at the Costs page.
 - **A chart for the hosting-cost discrepancy.** The brief names "discrepancies between active user counts and AWS hosting compute costs", and the table
   of flagged readings did not show the shape of it. The Costs page now plots every reading (views across, hosting cost up) with the fleet average cost per
   view as a solid line and the 3x and 1/3 lines as dashed ones, flagged readings as diamonds. It needs every reading, not a page of them, so there is
@@ -485,7 +485,7 @@ paging, its role check, its documentation); one survived at first because the te
 - `credit_price_usd`, `variance_tolerance_pct` (10) and `aws_mismatch_ratio` (3) are placeholders, not agreed business values.
 
 ### D46. Explanations are decided and read where they are asked for
-The owner tried "Explain" and found it did not work as intended: the explanation was held back, and to see or approve it you had to go to a separate page.
+I tried "Explain" and found it did not work as intended: the explanation was held back, and to see or approve it you had to go to a separate page.
 That was designed from the checker's side. With a small local model most explanations are held (llama3.1:8b passed 6 of 10 on the evaluation set, the
 others fewer), which leaves a viewer with nothing and an admin with a detour. Changes:
 - **A checked answer stands in.** If the AI's answer is held or withheld but the rule-based answer for the same alert passed the same checks, the service

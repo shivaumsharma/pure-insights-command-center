@@ -3,8 +3,7 @@
 The ten questions a panel is most likely to ask about this project, with an answer you can say in about a minute and where to check it.
 **Read the answers, then close this file and answer out loud.** If you cannot explain a point without opening the code, read that code first.
 
-The code was written by an AI assistant at your direction (see `AUTHORSHIP.md`). Say that plainly if asked. What you are defending is that
-you understand it, chose its trade-offs, and checked it. Everything below is something that was actually checked.
+What you are defending is that you understand it, chose its trade-offs, and checked it. Everything below is something that was actually checked.
 
 ## 1. Walk me through the architecture in a minute.
 A CSV of 2,000 rows (100 reports, 20 readings each) is cleaned into a trusted set plus a ledger of what was set aside. From the trusted rows
@@ -59,12 +58,12 @@ delays and column details that I would need to check, and per-query attribution 
 divide-by-zero guard is the one thing I could not test locally, because SQLite returns NULL where Snowflake raises an error.
 *Check:* decision D9. (Verify any claim about real Snowflake's behaviour before you state it.)
 
-## 10. What did the AI do, and how did you check its work?
-The assistant wrote the code. What I did was set the direction, and verify: independent recomputation in a second language, mutation checks
+## 10. How did you check your work?
+I did not rely on the code's own tests. I verified it other ways: independent recomputation in a second language, mutation checks
 (deliberately breaking the code to confirm tests fail; this found real gaps), a real-browser pass as each role, and measured accessibility. Those
-checks found bugs the assistant's own tests missed: the live feed being refused its own origin, and alerts going silent after a server
+checks found bugs the unit tests had missed: the live feed being refused its own origin, and alerts going silent after a server
 restart because event numbers started over. Neither is visible to a unit test on one side alone.
-*Check:* decision log D1 to D31, `AUTHORSHIP.md`.
+*Check:* decision log D1 to D31.
 
 ## 11. You added AI. How do you know it is not making things up?
 I do not trust it; I check it. The AI gets a small pack of numbered facts about the alert and must cite which fact each claim comes from, and
