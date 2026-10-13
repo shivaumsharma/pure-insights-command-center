@@ -1,0 +1,9 @@
+check_id,description,expected_value,actual_value,difference,status,note
+R1,Attributed = metered credits in every warehouse-hour with queries,0,0,0,PASS,count of warehouse-hours that do not balance
+R2,Metered credits in warehouse-hours with no queries,0,0,0,PASS,credits that could not be attributed to any report
+R3,Clean observations without a cost allocation,0,0,0,PASS,a non-zero value means the observation-to-query join dropped rows
+R4,Allocations that matched no observation,0,0,0,PASS,these carry credits but are excluded from unit cost
+R5,Query rows outside every metering window,0,0,0,PASS,their elapsed time earned no credits
+R6,Negative credits in the clean store,0,0,0,PASS,negatives should have been quarantined in Phase 1
+R7,Attributed total vs CSV-claimed total (true by construction),1206352.48,1206352.48,0,INFO,"warehouse credits were built from the CSV, so this match is circular"
+R8,Reports whose attributed credits differ from CSV-claimed by more than the tolerance,0,64,64,FAIL,the real reconciliation: query workload is independent of the CSV credits column
