@@ -13,9 +13,9 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-RESULT = os.path.join(ROOT, 'validation', 'snowflake_run_result.json')
-OUT_HTML = os.path.join(HERE, 'case-study.html')
-OUT_PDF = os.path.join(HERE, 'Pure-Insights-Command-Center-Case-Study-3.pdf')
+RESULT = os.environ.get('PI_RESULT', os.path.join(ROOT, 'validation', 'snowflake_run_result.json'))
+OUT_HTML = os.environ.get('PI_OUT_HTML', os.path.join(HERE, 'case-study.html'))
+OUT_PDF = os.environ.get('PI_OUT_PDF', os.path.join(HERE, 'Pure-Insights-Command-Center-Case-Study-3.pdf'))
 EDGE = os.environ.get('EDGE', r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe')
 
 SCRIPTS = [
@@ -40,11 +40,33 @@ def num(n):
     return f'{n:,}' if isinstance(n, int) else f'{n:,.2f}'
 
 
+def snowflake_section_from_checks(r):
+    by = {c['check_name']: c for c in r['checks']}
+    total = r['matched'] + r['different']
+    version, region = by.get('Snowflake version', {}).get('snowflake_value', '?'), by.get('Snowflake region', {}).get('snowflake_value', '?')
+    shown = [c for c in r['checks'] if c['check_name'].startswith(('rows loaded', 'attributed credits', 'attribution rows', '12 ', '11 unit cost: top', '13 variance: reports', '14 AWS mismatch: flagged'))]
+    rows = ''.join(f'<tr><td>{html.escape(c["check_name"])}</td><td>{html.escape(c["snowflake_value"])}</td><td>{html.escape(c["app_value"])}</td><td>{html.escape(c["result"])}</td></tr>' for c in shown)
+    if r['different'] == 0:
+        verdict = f'All {total} comparisons matched: every row count, total and status that Snowflake produced equals the value the application computed locally.'
+    else:
+        bad = ', '.join(html.escape(c['check_name']) for c in r['checks'] if c['result'] == 'DIFFERENT')
+        verdict = f'{r["matched"]} of {total} comparisons matched. These differ: {bad}.'
+    return f"""<h3>Run on Snowflake</h3>
+<p>I ran the suite on a Snowflake account (version {html.escape(version)}, region {html.escape(region)}) on {r["ran_at_utc"][:10]}. The schema script created the database and tables, the five generated data files were loaded, the five scripts were run in order, and each result was compared with what the application computed locally (row counts, column totals, statuses). {verdict}</p>
+<table>
+  <tr><th>Compared</th><th style="width:18%">Snowflake</th><th style="width:18%">Application</th><th style="width:12%">Result</th></tr>
+  {rows}
+</table>
+<p class="small">The remaining {total - len(shown)} comparisons are column totals for the unit-cost, variance and hosting-cost outputs.</p>"""
+
+
 def snowflake_section():
     if not os.path.exists(RESULT):
         return '''<h3>Status of the Snowflake run</h3>
 <p>The scripts are written in portable SQL. They run unchanged on a local SQLite engine, where they are tested against hand-worked fixtures and against the independent Python re-derivation, and a static check parses each one as Snowflake SQL, resolves every table and column against the schema, and confirms each CSV fits its table. A run on a live Snowflake account has not been completed yet.</p>'''
     r = json.load(open(RESULT, encoding='utf8'))
+    if 'checks' in r:
+        return snowflake_section_from_checks(r)
     loaded = r['loaded']
     rows = ''.join(
         f'<tr><td>{html.escape(t)}</td><td>{num(v["rows"])}</td><td>{num(v["rows_in_file"])}</td></tr>' for t, v in loaded.items())

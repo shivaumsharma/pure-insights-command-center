@@ -11,3 +11,6 @@ frontend/dist/
 .venv/
 __pycache__/
 *.pyc
+
+# generated Snowflake worksheet (python scripts/snowflake_run.py --bundle snowflake_run.sql)
+snowflake_run.sql
