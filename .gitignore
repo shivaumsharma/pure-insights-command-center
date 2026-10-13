@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db
+data/runtime/
+frontend/dist/
+
+# Python
+__pycache__/
+*.pyc

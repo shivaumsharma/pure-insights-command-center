@@ -1,0 +1,33 @@
+{
+  "name": "pure-insights-command-center",
+  "version": "0.1.0",
+  "description": "Operational admin console for report usage, refresh health and Snowflake cost attribution.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "data:build": "node backend/src/pipeline/pipeline.js",
+    "cost:build": "node --disable-warning=ExperimentalWarning backend/src/cost/cost-suite.js",
+    "test": "node --disable-warning=ExperimentalWarning --test --test-concurrency=4 --test-timeout=60000 \"backend/test/**/*.test.js\"",
+    "start": "node --disable-warning=ExperimentalWarning backend/src/server.js",
+    "web:install": "npm --prefix frontend install",
+    "web:dev": "npm --prefix frontend run dev",
+    "web:build": "npm --prefix frontend run build",
+    "web:test": "npm --prefix frontend test",
+    "test:all": "npm test && npm run web:test",
+    "smoke": "node --disable-warning=ExperimentalWarning scripts/smoke.mjs",
+    "smoke:restart": "node --disable-warning=ExperimentalWarning scripts/restart-check.mjs",
+    "triage:eval": "node --disable-warning=ExperimentalWarning scripts/triage-eval.mjs",
+    "validate": "node scripts/validate.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
+    "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "ws": "^8.22.0",
+    "zod": "^4.6.6"
+  }
+}

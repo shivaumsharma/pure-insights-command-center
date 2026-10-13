@@ -1,0 +1,11 @@
+# One line-ending style everywhere, so generated files compare equal on Windows, macOS and Linux (the CI data check depends on it).
+* text=auto eol=lf
+*.csv text eol=lf
+*.json text eol=lf
+*.sql text eol=lf
+
+# Never rewritten by git's text handling.
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff2 binary
