@@ -20,7 +20,7 @@ Status is only "done" when there is code and a test or a reproducible command be
 | D2 | Negative credit values | quarantined with a reason code (24 rows) | `pipeline.test.js`, ledger via `/api/quarantine` | done |
 | D3 | Latency spikes up to 55 s | flagged and alerted: 1,470 breaching rows, 6 at the 55 s ceiling (critical); de-duplicated to 838 attention alerts | `pipeline.test.js`, `alerts-engine.test.js` | done |
 | D4 | Active users vs AWS hosting cost discrepancies | `sql/14_views_vs_aws_cost.sql` (625 flagged; see D13) | `cost-real.test.js` | done |
-| R1 | Deliverable: runnable full-stack codebase on GitHub | this repo | `npm run test:all`, `npm run smoke`, `npm start`; CI workflow written and replayed locally | done; **not pushed to GitHub (by choice, for now), so CI has not run there** |
+| R1 | Deliverable: runnable full-stack codebase on GitHub | this repo | `npm run test:all`, `npm run smoke`, `npm start`; CI workflow; first run on GitHub (Ubuntu, 2026-10-13) passed all three jobs | done |
 | R2 | Deliverable: REST and WebSocket specification | `docs/api-spec.md` (REST, alert endpoints, WebSocket protocol, close codes, reconnect rules) | `api-spec.test.js`: the documented endpoints and the code's routes are identical, and each answers on a live server | done |
 | R3 | Deliverable: Snowflake cost allocation SQL script suite | `sql/00_schema.sql`, `sql/10-14` | `npm run cost:build`; matches a Python re-derivation (`npm run validate`); run guide in `docs/snowflake-run.md` | done, **never run on real Snowflake** |
 

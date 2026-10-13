@@ -233,8 +233,8 @@ names, scripts exist), and the checker was shown to fail on six deliberately bro
 project with its own git repository, from a clean install. The smoke test was shown to fail when the WebSocket origin bug, a missing UI
 build, or a viewer's access to costs was reintroduced.
 
-**What is not proven:** the workflow has never run on GitHub (nothing is pushed). The replay was on Windows, so a Linux-only problem
-(path case, shell differences) would only show on the first real run. There is no linter configured, so there is no lint step. Branch
+**What is proven, and what is not:** the first run on GitHub (clean Ubuntu, 2026-10-13) passed all three jobs, so the Linux-only problems I worried
+about (path case, shell differences) did not appear. It has run once; a single green run is not a track record. There is no linter configured, so there is no lint step. Branch
 protection ("require CI to pass before merging") is a GitHub setting and has to be switched on there. The actions are not on an automatic
 update schedule. `data/raw` holds the assessment's dataset and must be committed for CI to rebuild; confirm you are allowed to publish it.
 

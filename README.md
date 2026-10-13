@@ -21,7 +21,8 @@ Storage product; the palette is inspired by their website and the layout by a pu
 | Independent validation in Python: 42 checks, every headline number | done, passing ([report](validation/REPORT.md)) |
 | "Explain this alert": AI or rule-written, checked against the data, held for a person if unverifiable | done; run on four free local models (10 alerts each), **never on a hosted one** |
 
-Local only so far (not pushed). CI is written and replayed in a clean copy on Windows; it has not run on GitHub yet.
+On GitHub (private for now). The first CI run there, on a clean Ubuntu machine, passed all three jobs: the data-drift check, 223 backend tests, the
+Python validation, 233 frontend tests, the build and both end-to-end smoke tests.
 
 ## Quickstart (Node 22 or newer)
 

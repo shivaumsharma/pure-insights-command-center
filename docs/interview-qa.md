@@ -108,7 +108,7 @@ does not contain. Snowflake credits are a unit, converted at a placeholder $3 ea
   rule, would do better.
 - **"What stops it leaking data?"** Only the evidence pack is sent: no names, emails or costs. The AI is off unless explicitly switched on, and the default local model never leaves the machine.
 
-- **"What is not finished?"** No real Snowflake run; CI has never run on GitHub; no linter; no review workflow (the "reports to review" list is
+- **"What is not finished?"** No real Snowflake run; CI has run green once on GitHub, which is not a track record; no linter; no review workflow (the "reports to review" list is
   read-only); no screen-reader test; the credit price is a placeholder.
 - **"Where could the numbers mislead?"** The data is random, so any ranking ("most expensive report") reflects the generator, not behaviour.
 - **"Why not use a charting or data library?"** Fewer dependencies to explain and audit; the chart is one small SVG.
