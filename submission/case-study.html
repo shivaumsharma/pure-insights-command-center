@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pure Insights Command Center: Case Study 3 submission</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 16mm 15mm; }
+  :root { --ink:#2d2a27; --muted:#625c56; --accent:#b8470f; --line:#d9d4ce; --soft:#f6f3f0; }
+  * { box-sizing: border-box; }
+  body { font: 9.6pt/1.42 "Segoe UI", Calibri, Arial, sans-serif; color: var(--ink); margin: 0; }
+  h1 { font-size: 21pt; margin: 0 0 2pt; letter-spacing: -0.3pt; }
+  h2 { font-size: 13pt; margin: 15pt 0 5pt; padding-bottom: 3pt; border-bottom: 2px solid var(--accent); break-after: avoid; }
+  h3 { font-size: 10.4pt; margin: 9pt 0 3pt; break-after: avoid; }
+  p { margin: 3pt 0 5pt; }
+  .sub { color: var(--muted); font-size: 11pt; margin: 0 0 8pt; }
+  .lede { font-size: 11pt; border-left: 4px solid var(--accent); padding: 4pt 0 4pt 9pt; margin: 8pt 0; background: var(--soft); }
+  table { border-collapse: collapse; width: 100%; margin: 4pt 0 7pt; font-size: 8.7pt; break-inside: auto; }
+  th, td { border: 1px solid var(--line); padding: 2.6pt 5pt; text-align: left; vertical-align: top; }
+  th { background: var(--soft); font-weight: 600; }
+  tr { break-inside: avoid; }
+  code, pre { font-family: Consolas, "Courier New", monospace; font-size: 8.3pt; }
+  code { background: var(--soft); padding: 0 2pt; border-radius: 2px; }
+  pre { background: var(--soft); border: 1px solid var(--line); padding: 5pt 7pt; margin: 4pt 0 7pt; white-space: pre-wrap; break-inside: avoid; }
+  .two { display: flex; gap: 10pt; }
+  .two > div { flex: 1; min-width: 0; }
+  img { width: 100%; border: 1px solid var(--line); }
+  .cap { color: var(--muted); font-size: 8.2pt; margin-top: 2pt; }
+  .ok { color: #1a6b3a; font-weight: 600; }
+  .no { color: #a1281e; font-weight: 600; }
+  .flow { display: flex; align-items: stretch; gap: 5pt; margin: 6pt 0; font-size: 8.4pt; }
+  .box { border: 1.5px solid var(--ink); border-radius: 5px; padding: 4pt 5pt; flex: 1; text-align: center; background: #fff; }
+  .box b { display: block; }
+  .box.app { background: #efe9fb; border-color: #5b3fa6; }
+  .box.data { background: #fdeee4; border-color: var(--accent); }
+  .arrow { align-self: center; color: var(--muted); font-weight: 700; }
+  ul { margin: 2pt 0 5pt; padding-left: 14pt; }
+  li { margin: 1.5pt 0; }
+  .pb { break-before: page; }
+  footer { margin-top: 12pt; color: var(--muted); font-size: 8pt; border-top: 1px solid var(--line); padding-top: 4pt; }
+</style>
+</head>
+<body>
+
+<h1>Pure Insights Command Center</h1>
+<p class="sub">Case Study 3 submission: Technical Data &amp; AI Validation Intern, Monetization (Everpure)</p>
+
+<div class="lede">
+An admin console that attributes every Snowflake credit to a report, alerts in real time on slow or failing reports, and <b>proves its own numbers</b>:
+a separate Python program re-derives them from the raw CSV and the two are compared item by item.
+</div>
+
+<table>
+  <tr><th style="width:21%">Code (deliverable 1)</th><td><b>https://github.com/shivaumsharma/pure-insights-command-center</b> &nbsp;(React + Node/Express, MIT licence)</td></tr>
+  <tr><th>REST + WebSocket spec (deliverable 2)</th><td>Section 4 below, in full in <code>docs/api-spec.md</code>. A test fails if the document and the code's routes ever disagree.</td></tr>
+  <tr><th>Snowflake SQL suite (deliverable 3)</th><td>Section 5 below; the scripts are in <code>sql/</code> (<code>00_schema</code>, <code>10</code> to <code>14</code>), explained in <code>docs/cost-allocation.md</code>.</td></tr>
+  <tr><th>Run it (Node 22+)</th><td><code>npm install</code> &nbsp; <code>npm run web:install</code> &nbsp; <code>npm run data:build</code> &nbsp; <code>npm run web:build</code> &nbsp; <code>npm start</code> &rarr; http://localhost:3101.
+  Demo sign-ins (admin, two owners, a viewer, synthetic data only) are in <code>backend/config/demo-users.json</code>. <code>npm run test:all</code> runs 497 tests; <code>npm run validate</code> runs the independent Python check.</td></tr>
+  <tr><th>Honest status</th><td><span class="ok">Done and tested:</span> data cleaning, SQL suite, REST API with three roles, real-time alerts over WebSocket, React dashboard, independent validation, CI green on GitHub.
+  <span class="no">Not done:</span> the SQL has <b>never been run on a real Snowflake account</b> (the trial had expired). It runs on a local SQLite stand-in, and it is parsed and name-checked as Snowflake SQL. See section 9.</td></tr>
+</table>
+
+<div class="two">
+  <div><img src="../docs/img/overview.jpg" alt="Overview page"><div class="cap">Overview: fleet health, open alerts, and a map of every report.</div></div>
+  <div><img src="../docs/img/report-detail.jpg" alt="Report detail page"><div class="cap">A report's load time with its failed refreshes marked.</div></div>
+</div>
+
+<h2>1. Where each requirement is met</h2>
+<table>
+  <tr><th style="width:5%">#</th><th style="width:33%">Requirement in the brief</th><th>Where, and the evidence</th></tr>
+  <tr><td>T1</td><td>React frontend, Node/Express backend</td><td><code>frontend/</code> (Vite, React 19, React Router): sign-in, overview, reports, report detail, alerts, costs, orphans, data quality. <code>backend/src/</code> (Express 5). 257 frontend and 240 backend tests.</td></tr>
+  <tr><td>T1</td><td>Role-based access control</td><td>Admin / owner / viewer, enforced in the API (<code>routes/access.js</code>), not only hidden in the UI. An RBAC matrix test and a scoping test cover every route; 9 mutation checks.</td></tr>
+  <tr><td>T1</td><td>Monitor system health and orphaned reports</td><td><code>GET /api/health</code>, <code>GET /api/orphans</code>, owner reassignment with an audit trail and undo.</td></tr>
+  <tr><td>T2</td><td>Alert when load time exceeds 15 s, or a refresh fails</td><td><code>backend/src/alerts/engine.js</code>. Every one of the 1,181 alert events matches a separate Python implementation.</td></tr>
+  <tr><td>T2</td><td>WebSocket (or SSE) transport</td><td>WebSocket at <code>/ws</code>, role-filtered, reconnect with replay; 21 tests over real sockets.</td></tr>
+  <tr><td>T3</td><td>SQL over simulated Snowflake <code>ACCOUNT_USAGE</code> logs; credits per report; unit cost per active user view</td><td><code>sql/10_credit_attribution.sql</code>, <code>11_unit_cost.sql</code>; hand-worked fixture tests plus an independent Python re-derivation.</td></tr>
+  <tr><td>D1-D4</td><td>The four defects injected in the 2,000-row CSV</td><td>Section 6: orphaned reports, negative credits, latency spikes to 55 s, active-user vs AWS-cost discrepancies. Nothing was deleted; every exception is flagged or set aside with a reason.</td></tr>
+  <tr><td>R1-R3</td><td>The three deliverables</td><td>The repository; <code>docs/api-spec.md</code>; <code>sql/</code>. The full requirement-to-evidence table is <code>docs/brief-map.md</code>.</td></tr>
+</table>
+
+<h2>2. Full-stack architecture</h2>
+<div class="flow">
+  <div class="box app"><b>React dashboard</b>health, orphans, cost, live alerts</div><div class="arrow">REST &harr; WS</div>
+  <div class="box app"><b>Express backend</b>REST API + JWT + 3 roles<br>alert engine &middot; WebSocket hub</div><div class="arrow">&larr;</div>
+  <div class="box data"><b>SQL suite</b>cost attribution and reconciliation</div><div class="arrow">&larr;</div>
+  <div class="box data"><b>Usage logs</b>simulated Snowflake tables</div><div class="arrow">&larr;</div>
+  <div class="box data"><b>Cleaning pipeline</b>raw CSV, 2,000 rows; quarantines, never deletes</div>
+</div>
+<ul>
+  <li><b>One process, one address.</b> The same server serves the API, the WebSocket and the built UI, so there is no CORS to configure. The UI is served with a strict Content-Security-Policy.</li>
+  <li><b>Authentication.</b> <code>POST /api/auth/login</code> returns a signed JWT (HS256, algorithm pinned, 8 h). Five wrong sign-ins for one email and address in 15 minutes are throttled. Wrong password and unknown email give the same 401.</li>
+  <li><b>Roles.</b> <b>Admin</b>: everything, including reconciliation, quarantine, orphans, audit and reassigning owners. <b>Owner</b>: health, detail, cost and alerts for the reports they currently own, and a 404 for anyone else's. <b>Viewer</b>: fleet and report health, read-only, no cost data of any kind.</li>
+  <li><b>Snowflake stand-in.</b> The cost scripts are plain portable SQL. Locally they run unchanged on <code>node:sqlite</code>; on Snowflake they run after <code>USE DATABASE PURE_INSIGHTS;</code> (<code>docs/snowflake-run.md</code>).</li>
+  <li><b>Decisions are written down.</b> 46 numbered decisions with the reason and the alternative (<code>docs/decisions.md</code>), including every threshold that is my choice rather than the brief's.</li>
+</ul>
+
+<h2>3. Real-time alerting</h2>
+<p>An alert is raised when a report's load time is over <b>15 s</b>, or an automated refresh fails or times out. Alerts are computed by an event-time engine as readings arrive and pushed to every connected client the role may see.</p>
+<table>
+  <tr><th style="width:24%">Rule</th><th>Behaviour</th></tr>
+  <tr><td>Severity (load time)</td><td>over 15 s low &middot; over 25 s medium &middot; over 35 s high &middot; 55 s or more critical. A failed or timed-out refresh is high; three in a row is critical. An <code>UNKNOWN</code> status raises nothing and resolves nothing.</td></tr>
+  <tr><td>Lifecycle</td><td><code>TRIGGERED</code> (first time) &rarr; <code>ESCALATED</code> (worse; sent at once) &rarr; <code>REPEATED</code> (still true after a 6 h cooldown) &rarr; <code>RESOLVED</code> (two consecutive clear readings).</td></tr>
+  <tr><td>De-duplication</td><td>74% of readings breach 15 s, so repeats are held back and counted (<code>suppressed_since_last</code>): 2,026 breaching readings become 838 alerts needing attention.</td></tr>
+  <tr><td>Telemetry source</td><td>The cleaned observations are replayed at 10 per second through the engine, then loop with timestamps moved forward. Time in alerts is event time, not wall-clock time.</td></tr>
+  <tr><td>Reconnect</td><td>A client sends the last <code>event_id</code> and <code>stream_id</code> it saw and receives exactly the alerts it missed, once each, then live ones. If events were dropped, or the server restarted, it gets a <code>gap</code> message and refetches over REST.</td></tr>
+</table>
+
+<h2>4. REST and WebSocket specification (summary)</h2>
+<p>Base URL <code>http://localhost:3101</code>. JSON everywhere; one error shape: <code>{ "error": { "code", "message", "details" } }</code> with 400, 401, 403, 404, 413, 429 and 500 documented. Lists take <code>limit</code> (1 to 200) and <code>offset</code> and return <code>{ data, page: { limit, offset, total } }</code>. Send <code>Authorization: Bearer &lt;token&gt;</code>.</p>
+<table>
+  <tr><th style="width:36%">Endpoint</th><th style="width:12%">Roles</th><th>Purpose</th></tr>
+  <tr><td><code>POST /api/auth/login</code>, <code>GET /api/auth/me</code></td><td>public / all</td><td>Sign in; who am I</td></tr>
+  <tr><td><code>GET /api/health</code></td><td>all</td><td>Fleet counts, refresh success rate, latency breaches (an owner sees only their reports)</td></tr>
+  <tr><td><code>GET /api/reports</code>, <code>/api/reports/:id</code></td><td>all</td><td>List with filters and sort; one report with its recent readings. Cost fields are absent for viewers</td></tr>
+  <tr><td><code>GET /api/alerts</code>, <code>/active</code>, <code>/summary</code></td><td>all / admin</td><td>Alert history with filters; open conditions worst-first; counts</td></tr>
+  <tr><td><code>GET /api/costs/reports</code></td><td>admin, owner</td><td>Credits, cost per report and per view, idle spend</td></tr>
+  <tr><td><code>GET /api/costs/reconciliation</code>, <code>/variance</code></td><td>admin</td><td>The eight reconciliation checks; attributed vs claimed credits per report</td></tr>
+  <tr><td><code>GET /api/costs/aws-mismatch</code>, <code>/aws-usage</code></td><td>admin</td><td>Hosting cost that does not fit the views; every reading with its flag (for the chart)</td></tr>
+  <tr><td><code>GET /api/orphans</code>; <code>PUT</code>/<code>DELETE /api/reports/:id/owner</code></td><td>admin</td><td>Reports with no owner; assign or remove an owner (audited)</td></tr>
+  <tr><td><code>GET /api/quarantine</code>, <code>/api/dq-report</code>, <code>/api/audit</code></td><td>admin</td><td>Rows set aside with reasons; the data-quality report; owner changes</td></tr>
+  <tr><td><code>GET /api/alerts/:id/triage</code>, <code>/api/triage/*</code></td><td>all / admin</td><td>"Explain this alert" (section 8) and its review queue</td></tr>
+</table>
+<h3>WebSocket <code>ws://localhost:3101/ws</code></h3>
+<p>The browser's WebSocket cannot set headers, and a token in the URL leaks into logs, so the token goes in the <b>first message</b>.</p>
+<pre>client -&gt; { "type": "auth", "token": "&lt;jwt&gt;", "last_event_id": 41, "stream_id": "9f3a1c2e" }  // last two optional
+server -&gt; { "type": "ready", "user": {...}, "last_event_id": 57, "stream_id": "9f3a1c2e", "resumed": true }
+server -&gt; { "type": "gap", "reason": "dropped" | "restarted" }   // only if needed; client refetches over REST
+server -&gt; { "type": "alert", "event_id": 42, "alert_type": "LATENCY", "lifecycle": "ESCALATED",
+            "severity": "high", "report_id": "RPT_201", "value": 41.2, "threshold": 15, "suppressed_since_last": 2 }
+client -&gt; { "type": "ping" }   server -&gt; { "type": "pong" }   server -&gt; { "type": "error", "code", "message" }, then closes</pre>
+<p><b>Close codes:</b> 4401 not authenticated, bad or expired token, or 5 s auth timeout &middot; 4429 more than 5 connections for a user &middot; 1008 invalid message &middot; 1003 binary frame &middot; 1009 over 4 KB &middot; 1001 server shutting down. The server pings every 30 s. Browser origins other than the server's own (or <code>ALLOWED_ORIGINS</code>) are refused with 403. Alerts are filtered by role on the server, so an owner never receives another owner's alerts.</p>
+
+<h2>5. Cloud cost SQL: attributing credits to reports</h2>
+<p><b>Method.</b> Snowflake bills per warehouse-hour, not per query. The standard way to cost queries on a shared warehouse is to split each warehouse-hour's credits across the queries that ran in it, in proportion to their share of elapsed time. A report's credits are the sum over the hours it ran. Failed and timed-out queries still hold the warehouse, so they keep their share. Credits are conserved: the attributed credits in an hour add up to that hour's metered credits.</p>
+<pre>-- sql/10_credit_attribution.sql (core of it)
+SUM(w.elapsed_ms) OVER (PARTITION BY w.warehouse_name, w.window_start)     AS window_elapsed_ms,
+CASE WHEN window_elapsed_ms &gt; 0 THEN elapsed_ms * 1.0 / window_elapsed_ms ELSE 0 END AS workload_share,
+workload_share * window_credits                                              AS attributed_credits
+FROM sim_account_usage.query_history q
+JOIN sim_account_usage.warehouse_metering_history m
+  ON m.warehouse_name = q.warehouse_name AND q.start_time &gt;= m.start_time AND q.start_time &lt; m.end_time</pre>
+<table>
+  <tr><th style="width:27%">Script</th><th>What it does</th></tr>
+  <tr><td><code>00_schema.sql</code></td><td>Schemas and tables: the simulated <code>QUERY_HISTORY</code> and <code>WAREHOUSE_METERING_HISTORY</code>, cleaned observations, parameters</td></tr>
+  <tr><td><code>10_credit_attribution.sql</code></td><td>Splits each warehouse-hour's credits across its queries by elapsed-time share</td></tr>
+  <tr><td><code>11_unit_cost.sql</code></td><td>Cost per report and <b>per active view</b>; idle spend (cost with zero views); orphan status</td></tr>
+  <tr><td><code>12_reconciliation_checks.sql</code></td><td>Eight PASS / FAIL / INFO checks on the numbers</td></tr>
+  <tr><td><code>13_report_variance.sql</code></td><td>Attributed vs CSV-claimed credits per report, within 10%</td></tr>
+  <tr><td><code>14_views_vs_aws_cost.sql</code></td><td>Readings whose AWS hosting cost does not fit their views (3x above or below the fleet's cost per view)</td></tr>
+</table>
+<h3>What the checks found on this data</h3>
+<table>
+  <tr><th style="width:12%">Check</th><th style="width:48%">Question</th><th>Result</th></tr>
+  <tr><td>R1</td><td>Do attributed credits equal metered credits in every warehouse-hour?</td><td><span class="ok">PASS</span></td></tr>
+  <tr><td>R2 to R6</td><td>Metered credits in hours with no queries; a join silently dropping an observation or a query row; negative credits left after cleaning</td><td><span class="ok">PASS</span> (0 each)</td></tr>
+  <tr><td>R7</td><td>Attributed total vs CSV total</td><td>INFO: equal, but <b>true by construction</b>, so it proves nothing</td></tr>
+  <tr><td>R8</td><td>Per-report attributed credits vs what the CSV claims, within 10%</td><td><span class="no">64 of 100 reports outside tolerance</span></td></tr>
+</table>
+<p>The R8 result is expected: the supplied data was generated so that each report's credits are independent of its workload. It shows the reconciliation <i>can</i> catch a disagreement; it is not evidence that any real report is mis-billed. Dollar figures use a placeholder credit price ($3) and are labelled illustrative in the API (<code>price_is_placeholder: true</code>).</p>
+
+<h2>6. The four defects in the data, and what happened to each</h2>
+<table>
+  <tr><th style="width:23%">Defect</th><th style="width:30%">Found</th><th>Handling</th></tr>
+  <tr><td>Orphaned reports (<code>NaN</code> / <code>ORPHANED_REPORT</code>)</td><td>242 readings have no usable owner (125 empty, 117 the literal placeholder); 13 reports have none on their latest reading</td><td>Flagged, never dropped. The Orphaned reports page lets an admin assign an owner (audited, with undo).</td></tr>
+  <tr><td>Negative credit values</td><td>24 rows, net &minus;161.04 credits</td><td>Set aside in a quarantine ledger with a reason code (<code>/api/quarantine</code>); not deleted. Cost totals exclude them.</td></tr>
+  <tr><td>Latency spikes up to 55 s</td><td>1,470 of 1,976 readings are over 15 s; 6 sit at exactly 55 s</td><td>Alerted by tier; the 55 s ceiling is critical. Repeats are de-duplicated (838 alerts).</td></tr>
+  <tr><td>Active users vs AWS hosting cost</td><td>625 readings (32%) have hosting cost 3x or more away from what their views predict</td><td>A chart on the Costs page plots every reading against the fleet's cost per view, with the 3x band; flagged readings are listed. "Active users" are approximated by monthly active views.</td></tr>
+</table>
+<p>Statistical anomaly detection was tested and rejected as the method: every numeric column is spread evenly across its range, so the 1.5x IQR and 3-standard-deviation tests flag nothing, and the 24 negative values sit well inside those fences. They are caught by a rule (credits cannot be negative). Thirteen findings in all, each with evidence, impact, who to route it to and a next step, are in <code>docs/validation-findings.md</code>.</p>
+
+<h2>7. Quality, and how far to trust the numbers</h2>
+<ul>
+  <li><b>497 automated tests</b> (240 backend, 257 frontend), each run on a clean machine by GitHub Actions: data-drift check, tests, build, and two end-to-end smoke runs that start the whole product. Tests were <b>mutation-checked</b>: deliberately breaking the code in throwaway copies and confirming a test fails. One mutation (removing a divide-by-zero guard) cannot be detected locally and is recorded as such.</li>
+  <li><b>Independent validation:</b> <code>npm run validate</code> runs a separate Python program that re-derives every headline number from the raw CSV and compares it item by item with the app: 68 checks, all passing. It also parses the SQL as Snowflake SQL, resolves every column and table against the schema, and confirms the CSV column order matches the tables.</li>
+  <li><b>The spec cannot drift:</b> a test compares the documented endpoints with the routes actually registered, and calls each on a live server.</li>
+</ul>
+<table>
+  <tr><th style="width:36%">Number</th><th style="width:34%">Where it comes from</th><th>How much to trust it</th></tr>
+  <tr><td>100 reports, 24 negative rows, 13 unowned</td><td>The supplied CSV, re-derived in Python</td><td>Solid: counts of real file contents</td></tr>
+  <tr><td>838 alerts from 2,026 breaching readings</td><td>My alert rules; every alert matched by the Python model</td><td>The thresholds are my choices; the reduction depends on this data</td></tr>
+  <tr><td>64 of 100 reports disagree on credits</td><td>My simulated usage logs vs the CSV</td><td>Shows the check works; says nothing about real billing</td></tr>
+  <tr><td>Warehouse credits equal CSV credits</td><td>Built from the CSV</td><td>True by construction; proves nothing</td></tr>
+</table>
+<p>The validator was written by the same author as the app, from the same written rules, so it catches slips and drift, not a wrong reading of the brief.</p>
+
+<h2>8. Beyond the brief: "Explain this alert", with the AI checked</h2>
+<p>Because the role is about validating AI output, each alert can be explained by a model (hosted, or a free local one through Ollama) or by plain rules. The model is not trusted: it receives a numbered evidence pack and must cite which fact supports each claim and the value it read. A checker compares every citation with the real data, tests each cause against a data rule, and rejects numbers not in the evidence. Verdicts: <b>passed</b> (shown, with a "how it was checked" list), <b>could not be verified</b> (held for an admin to approve or dismiss), or <b>contradicts the data</b> (withheld). When the AI's answer is held, everyone else sees the rule-based answer for the same alert if it passed the same checks, labelled as rule-based.</p>
+<p><b>Measured, small sample:</b> four free local models on 10 alerts each passed the checks 6 (Llama 3.1 8B), 3 (Gemma 2 9B), 0 (Qwen 2.5 7B) and 0 (Qwen 2.5 1.5B) times; the rule-based control passed 9 of the same 10. This is a small, untuned sample, not a claim about AI in general, and no hosted model was run.</p>
+
+<h2>9. Limits, and what I would do next</h2>
+<ul>
+  <li><b>Never run on real Snowflake.</b> The trial had expired. The scripts are portable SQL, tested on SQLite with hand-worked fixtures, re-derived in Python, and checked statically as Snowflake SQL. A step-by-step run guide with expected results is in <code>docs/snowflake-run.md</code>. The parser is lenient, so a pass means "no typos or malformed structure it can see", not "valid on Snowflake".</li>
+  <li><b>The usage logs are simulated from the CSV</b>, so warehouse totals match it by construction. The reconciliation matters on real <code>ACCOUNT_USAGE</code> data.</li>
+  <li><b>The CSV has no timestamps.</b> Alert order rests on a synthetic timeline (the k-th row of a report is its k-th hourly reading). The columns are statistically unrelated, so rankings reflect the generator and should not be read as business conclusions.</li>
+  <li><b>Choices that are mine, not the brief's:</b> the 10% credit tolerance, the 3x hosting band, the severity tiers, the 6 h cooldown, the $3 placeholder price. Each is in the decision log.</li>
+  <li><b>Next:</b> run the SQL on a real account and compare; add a flag-only statistical screen beside the rules for real data; add a stored history so alerts survive a restart.</li>
+</ul>
+<h3>How it was built</h3>
+<p>The code, tests and docs were written with Claude Code (an AI assistant) at my direction, and the repository says so (<code>docs/AUTHORSHIP.md</code>). The code was developed over several sessions before the repository existed, so the commit history groups finished work by area rather than replaying it; every commit carries the date it was really made, and the decision log is the better record of why each choice was made.</p>
+
+<footer>Pure Insights Command Center &middot; github.com/shivaumsharma/pure-insights-command-center &middot; Built on synthetic data. Not an official Everpure or Pure Storage product.</footer>
+</body>
+</html>
