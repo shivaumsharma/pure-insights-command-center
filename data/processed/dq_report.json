@@ -1,0 +1,49 @@
+{
+  "source_file": "Case_Study_3_Pure_Insights_Monitoring.csv",
+  "rows": {
+    "in": 2000,
+    "clean": 1976,
+    "quarantined": 24,
+    "conserved": true
+  },
+  "quarantine_by_reason": {
+    "NEGATIVE_CREDITS": 24
+  },
+  "quarantine_note": "A row with several problems is counted once per reason, so reason counts can exceed quarantined rows.",
+  "flags_on_clean_rows": {
+    "orphan_observations": 242,
+    "orphan_missing": 125,
+    "orphan_sentinel": 117,
+    "orphan_invalid_email": 0,
+    "status_unknown": 98,
+    "status_unrecognised": 0,
+    "zero_views": 4,
+    "zero_views_with_cost": 4,
+    "concurrency_exceeds_views": 91
+  },
+  "latency": {
+    "alert_threshold_sec": 15,
+    "breaches": 1470,
+    "breach_pct_of_clean": 74.39,
+    "at_ceiling_sec": 55,
+    "at_ceiling": 6,
+    "max_sec": 55
+  },
+  "refresh_status_clean": {
+    "SUCCESS": 1322,
+    "TIMED_OUT": 177,
+    "FAILED": 379,
+    "UNKNOWN": 98
+  },
+  "reports": {
+    "total": 100,
+    "currently_orphaned": 13,
+    "with_any_orphan_observation": 94,
+    "with_more_than_one_owner": 100
+  },
+  "credits": {
+    "source_sum_of_parseable_values": 1206191.44,
+    "clean_sum": 1206352.48,
+    "quarantine_effect": 161.04
+  }
+}
