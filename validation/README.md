@@ -18,6 +18,7 @@ re-derives:
 | Hosting cost | readings whose AWS cost is 3x off what their views predict | `cost_aws_mismatch.csv` |
 | Explanations | which causes the data supports for each alert, using only readings up to that alert | the app's rule-based explainer |
 | README | every number the README quotes | the figures above |
+| SQL, statically | the six scripts parsed as **Snowflake** SQL; every table and column they use looked up in the schema; each generated CSV matched to its table, column for column and in order | `sql/` and `data/processed/` (needs `pip install -r validation/requirements.txt`; skipped with a note if absent) |
 
 `REPORT.md` is the result, committed so it can be read without running anything.
 
@@ -26,13 +27,14 @@ re-derives:
 I changed the app, the data and the claims in a throwaway copy and checked that each change makes it fail (and says what differs):
 alert cooldown, a severity tier, the number of clear readings before resolving, the critical failure streak, two explanation rules, an owner
 blanked in the clean data, an edited cost figure, a wrong variance status, a deleted AWS-mismatch row, a negative-credit row put back, and two
-wrong README numbers. All 13 were caught.
+wrong README numbers. All 13 were caught. For the SQL check I misspelt a column, referenced a table that does not exist, broke a bracket, renamed schema columns (twice) and mistyped a keyword; all six were caught, and it also fails if its package is missing when CI requires it.
 
 ## What it does not show
 
 - The author is the same person as the author of the code, working from the same written rules (`docs/decisions.md`). It catches slips and drift
   between two implementations. **It does not catch a wrong reading of the brief.**
-- The SQL was compared through its SQLite stand-in. **It has never been run on a real Snowflake account.** A reader who has one can run
-  `sql/00_schema.sql` then `sql/10`-`14` and compare `core.cost_allocation` with `data/processed/cost_per_report.csv`.
+- The SQL was compared through its SQLite stand-in and **checked statically as Snowflake SQL** (the parser is `sqlglot`, which is lenient: it accepts some
+  invalid SQL, for example an empty `PARTITION BY`). That finds typos and mismatches. **It has never been run on a real Snowflake account**, so it cannot show
+  that Snowflake accepts every function and type, or that the results match. A reader who has an account can follow `docs/snowflake-run.md`.
 - The credit price is a placeholder ($3), so the checks cover credits, ratios and rankings rather than dollar totals.
 - The data is synthetic and statistically random, so "expensive" and "slow" reflect how it was generated.

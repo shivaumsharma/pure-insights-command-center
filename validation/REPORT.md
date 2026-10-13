@@ -3,7 +3,7 @@
 Produced by `npm run validate` (`validation/validate.py`). Every figure below was re-derived from the raw CSV by code that shares nothing
 with the app, then compared with what the app produced. A `FAIL` means the two disagree and one of them is wrong.
 
-**42 of 42 checks passed.**
+**63 of 63 checks passed.**
 
 ## 1. Cleaning the raw CSV
 
@@ -89,6 +89,34 @@ Each figure the README states, recomputed here. If one moves, update the README.
 | alerts with a data-supported cause | 721 | 721 | PASS |
 | alerts with none (sent to a person) | 117 | 117 | PASS |
 
+## 7. The SQL, checked statically as Snowflake SQL
+
+No Snowflake account was available, so the suite was not run there. These checks parse it in Snowflake's dialect (sqlglot), resolve every table and column against `sql/00_schema.sql`, and match each generated CSV to the table it loads into. They find typos and mismatches; they cannot show the results are right, and the parser is lenient. See `docs/snowflake-run.md`.
+
+| Check | Result | Status |
+|---|---|---|
+| 00_schema.sql parses as Snowflake SQL | 11 statements | PASS |
+| 10_credit_attribution.sql parses as Snowflake SQL | 2 statements | PASS |
+| 11_unit_cost.sql parses as Snowflake SQL | 1 statements | PASS |
+| 12_reconciliation_checks.sql parses as Snowflake SQL | 1 statements | PASS |
+| 13_report_variance.sql parses as Snowflake SQL | 1 statements | PASS |
+| 14_views_vs_aws_cost.sql parses as Snowflake SQL | 1 statements | PASS |
+| 00_schema.sql defines the tables the suite reads | core.observations_clean, core.quarantine_ledger, core.reports, core.cost_params, sim_account_usage.query_history, sim_account_usage.warehouse_metering_history | PASS |
+| 10_credit_attribution.sql: every table and column resolves | all resolve | PASS |
+| 11_unit_cost.sql: every table and column resolves | all resolve | PASS |
+| 12_reconciliation_checks.sql: every table and column resolves | all resolve | PASS |
+| 13_report_variance.sql: every table and column resolves | all resolve | PASS |
+| 14_views_vs_aws_cost.sql: every table and column resolves | all resolve | PASS |
+| observations_clean.csv lines up with core.observations_clean, column for column in order | 21 columns | PASS |
+| quarantine_ledger.csv lines up with core.quarantine_ledger, column for column in order | 5 columns | PASS |
+| reports.csv lines up with core.reports, column for column in order | 11 columns | PASS |
+| sim_query_history.csv lines up with sim_account_usage.query_history, column for column in order | 7 columns | PASS |
+| sim_warehouse_metering_history.csv lines up with sim_account_usage.warehouse_metering_history, column for column in order | 7 columns | PASS |
+| the checker rejects a mistyped keyword | SELEC 1 | PASS |
+| the checker rejects a misspelt column | report_idd | PASS |
+| the checker rejects a table that does not exist | core.no_such_table | PASS |
+| the checker accepts a correct query (it does not reject everything) | report_id | PASS |
+
 ## Causes found by the rules
 
 Alerts each cause was found on (an alert can have several): HIGH_CONCURRENCY 203, HIGH_QUERY_VOLUME 210, OWNERSHIP_GAP 107, RECURRING_SLOWNESS 567, REPEATED_FAILURES 62.
@@ -97,6 +125,6 @@ Alerts each cause was found on (an alert can have several): HIGH_CONCURRENCY 203
 
 - It shows the app's numbers can be reproduced from the raw file by a second, separate implementation, to the last digit where the data is exact.
 - It was written by the same person as the app, from the same written rules, so it catches slips and drift, **not a wrong reading of the brief**.
-- The SQL suite was compared through its SQLite stand-in. **It has never been run on a real Snowflake account.**
+- The SQL suite was compared through its SQLite stand-in and checked statically as Snowflake SQL (section 7). **It has never been run on a real Snowflake account.**
 - Credit price is a placeholder ($3), so dollar totals are illustrative; the checks cover credits, ratios and rankings.
 - The data is synthetic and statistically random, so what is "expensive" or "slow" reflects the generator, not any real report.

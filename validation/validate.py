@@ -12,13 +12,17 @@ What it covers, in the order the data flows:
   4. AWS mismatch   readings whose hosting cost does not fit their views            vs cost_aws_mismatch.csv
   5. explanations   which causes the data supports for each alert                    vs the app's rule-based explainer
   6. claims         the numbers quoted in README.md
+  7. SQL, static    the SQL suite parsed as Snowflake SQL, every table and column resolved against the schema, and each CSV matched to its table
+                    (needs `pip install -r validation/requirements.txt`; skipped with a note if sqlglot is absent, required when REQUIRE_SQLGLOT=1)
 
 What it does NOT show: it was written by the same person as the code, from the same written rules (docs/decisions.md), so it catches
-slips and drift, not a wrong reading of the brief. The SQL was compared through its SQLite stand-in, never on a real Snowflake account.
+slips and drift, not a wrong reading of the brief. The SQL was compared through its SQLite stand-in and checked statically as Snowflake SQL, but
+never run on a real Snowflake account.
 """
 import csv
 import json
 import math
+import os
 import re
 import subprocess
 import sys
@@ -291,8 +295,14 @@ class Results:
     def __init__(self):
         self.sections, self.failed, self.total = [], 0, 0
 
-    def section(self, title, note=''):
-        self.sections.append({'title': title, 'note': note, 'rows': []})
+    def section(self, title, note='', kind='compare'):
+        self.sections.append({'title': title, 'note': note, 'rows': [], 'kind': kind})
+
+    def static(self, name, result, ok):
+        self.total += 1
+        self.failed += 0 if ok else 1
+        self.sections[-1]['rows'].append((name, result, None, ok, ''))
+        print(('PASS ' if ok else 'FAIL ') + name + ('' if ok else f'   {result}'))
 
     def check(self, name, independent, app, ok=None, detail=''):
         ok = (independent == app) if ok is None else ok
@@ -425,6 +435,23 @@ def main():
     for name, quoted in CLAIMS.items():
         R.check(name, derived[name], quoted)
 
+    # ---- 7 the SQL, statically
+    R.section('7. The SQL, checked statically as Snowflake SQL',
+              'No Snowflake account was available, so the suite was not run there. These checks parse it in Snowflake\'s dialect (sqlglot), resolve every table and '
+              'column against `sql/00_schema.sql`, and match each generated CSV to the table it loads into. They find typos and mismatches; they cannot show the results '
+              'are right, and the parser is lenient. See `docs/snowflake-run.md`.', kind='static')
+    try:
+        import sql_static
+    except ImportError:
+        if os.environ.get('REQUIRE_SQLGLOT') == '1':
+            R.static('sqlglot is installed (required here)', 'run: pip install -r validation/requirements.txt', False)
+        else:
+            R.sections[-1]['rows'].append(('not run: sqlglot is not installed', 'pip install -r validation/requirements.txt', None, True, ''))
+            print('SKIP the static SQL checks (pip install -r validation/requirements.txt)')
+    else:
+        for name, result, ok in sql_static.run(ROOT / 'sql', PROCESSED):
+            R.static(name, result, ok)
+
     write_report(R, counts)
     print(f'\n{R.total - R.failed} of {R.total} checks passed. Report written to {OUT.relative_to(ROOT)}')
     sys.exit(1 if R.failed else 0)
@@ -436,6 +463,12 @@ def write_report(R, counts):
              'with the app, then compared with what the app produced. A `FAIL` means the two disagree and one of them is wrong.', '',
              f'**{R.total - R.failed} of {R.total} checks passed.**', '']
     for s in R.sections:
+        if s.get('kind') == 'static':
+            lines += [f'## {s["title"]}', '', s['note'], '', '| Check | Result | Status |', '|---|---|---|']
+            for name, result, _, ok, _ in s['rows']:
+                lines.append(f'| {name} | {result} | {"PASS" if ok else "**FAIL**"} |')
+            lines.append('')
+            continue
         lines += [f'## {s["title"]}', '', s['note'], '', '| Check | Independent (Python) | App | Result |', '|---|---|---|---|']
         for name, independent, app, ok, detail in s['rows']:
             show = lambda v: ('`' + json.dumps(v)[:60] + '`') if isinstance(v, (dict, list)) else f'{v:,}' if isinstance(v, int) and not isinstance(v, bool) else str(v)
@@ -445,7 +478,7 @@ def write_report(R, counts):
               '## What this does and does not show', '',
               '- It shows the app\'s numbers can be reproduced from the raw file by a second, separate implementation, to the last digit where the data is exact.',
               '- It was written by the same person as the app, from the same written rules, so it catches slips and drift, **not a wrong reading of the brief**.',
-              '- The SQL suite was compared through its SQLite stand-in. **It has never been run on a real Snowflake account.**',
+              '- The SQL suite was compared through its SQLite stand-in and checked statically as Snowflake SQL (section 7). **It has never been run on a real Snowflake account.**',
               '- Credit price is a placeholder ($3), so dollar totals are illustrative; the checks cover credits, ratios and rankings.',
               '- The data is synthetic and statistically random, so what is "expensive" or "slow" reflects the generator, not any real report.', '']
     OUT.write_text('\n'.join(lines), encoding='utf-8', newline='\n')

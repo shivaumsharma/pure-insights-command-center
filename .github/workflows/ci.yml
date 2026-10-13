@@ -48,8 +48,16 @@ jobs:
         run: npm run triage:eval
 
       # Re-derives the headline numbers from the raw CSV in Python (nothing shared with the app) and compares them item by item.
-      - name: Independent validation (Python)
-        run: npm run validate
+      # Also checks the SQL statically as Snowflake SQL (needs the one package in validation/requirements.txt). A virtual environment keeps this
+      # working on any runner image; REQUIRE_SQLGLOT makes a missing package a failure here instead of a quiet skip.
+      - name: Independent validation (Python, with a SQL parser)
+        env:
+          REQUIRE_SQLGLOT: '1'
+        run: |
+          python3 -m venv .venv
+          . .venv/bin/activate
+          pip install --quiet -r validation/requirements.txt
+          npm run validate
 
       - name: Dependency audit (high and above)
         run: npm audit --omit=dev --audit-level=high
