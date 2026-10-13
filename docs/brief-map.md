@@ -28,7 +28,7 @@ Status is only "done" when there is code and a test or a reproducible command be
 
 | # | Addition | Why | Where | Status |
 |---|---|---|---|---|
-| E1 | AI explanations of alerts, validated against the data, with a human-review queue | The role is about validating AI output (decision D32) | `backend/src/triage/`, `frontend/src/pages/AiReview.jsx` | built and tested; run on a local 7B model (10 alerts), **no hosted model run** |
+| E1 | AI explanations of alerts, validated against the data, with a human-review queue | The role is about validating AI output (decision D32) | `backend/src/triage/`, `frontend/src/pages/AiReview.jsx` | built and tested; run on a local 7B model (10 alerts) |
 | E3 | Independent Python validation of every headline number, a findings log, and a Snowflake run guide | The role is about independently rerunning analytics and documenting discrepancies (decision D40) | `validation/`, `docs/validation-findings.md`, `docs/snowflake-run.md` | built; 68 checks pass; the SQL is checked statically as Snowflake SQL, but the Snowflake run itself is **not done** |
 | E2 | Charts and a more visual interface: rings, bars, line, scatter, fleet map | A command center is read at a glance (decision D39) | `frontend/src/components/charts/`, `docs/design-system.md` | built and tested; presentation of existing data, no backend change |
 

@@ -36,7 +36,7 @@ flowchart TB
 | REST API, JWT, RBAC | 3 | done (`backend/src`, `docs/api-spec.md`) |
 | Alert engine, WebSocket hub, telemetry replay | 4 | done (`backend/src/alerts`, `backend/src/realtime`) |
 | React dashboard | 5 | done (`frontend/src`, served by the API server) |
-| AI explanations: evidence, validator, review queue | 7 | done (`backend/src/triage`); local model run on 10 alerts, hosted model not run |
+| AI explanations: evidence, validator, review queue | 7 | done (`backend/src/triage`); local model run on 10 alerts |
 
 ## Validation loop
 

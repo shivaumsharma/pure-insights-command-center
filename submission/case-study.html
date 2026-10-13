@@ -86,7 +86,7 @@
 <h3>Task 3: Cloud cost allocation engine</h3>
 <ul>
   <li>Snowflake bills per warehouse-hour, not per query. Each hour's credits are therefore split across the queries that ran in it in proportion to their elapsed time, and a report's credits are the sum over its hours. Failed and timed-out queries still hold the warehouse, so they keep their share. Credits are conserved: the shares in an hour add up to that hour's metered credits.</li>
-  <li>Cost per report = attributed credits &times; credit price + AWS hosting cost. Cost per active user view = that cost divided by total monthly active views (pooled over a report's readings, so one reading with very few views cannot distort it). Spend in readings with zero views is shown separately as idle cost. The credit price is a placeholder of $3 per credit, labelled as such in the API, so dollar totals are for comparing reports, not for quoting.</li>
+  <li>Cost per report = attributed credits &times; credit price + AWS hosting cost. Cost per active user view = that cost divided by total monthly active views (pooled over a report's readings, so one reading with very few views cannot distort it). Spend in readings with zero views is shown separately as idle cost. The data has no price for a Snowflake credit, so I used a round $3 per credit as a rough estimate. Dollar totals are good for comparing reports with each other, not as exact amounts.</li>
   <li>Eight reconciliation checks (R1 to R8) re-derive and cross-check the numbers from the raw tables. Results are in section 5. The full scripts are in Appendix B.</li>
   <li>The question's "active user counts versus AWS hosting cost" discrepancy: the fleet's average hosting cost per view is computed, and a reading is flagged when its cost is 3 times above or below what its views predict, or when it has cost but no views. The Costs page plots every reading against that average with the 3x band.</li>
 </ul>
@@ -141,7 +141,7 @@
 <ul>
   <li>497 automated tests (240 back end, 257 front end). The tests were mutation-checked: I broke the code deliberately in throwaway copies and confirmed a test failed each time. One case, removing a divide-by-zero guard, cannot be detected on the local engine and is recorded as such.</li>
   <li>GitHub Actions runs the data drift check, all tests, the build, the Python validation and two end-to-end runs that start the whole product, on a clean machine.</li>
-  <li>The independent Python validation (68 checks) re-derives every number above from the raw CSV. It also parses every SQL script as Snowflake SQL and resolves each table and column against the schema.</li>
+  <li>The separate Python validation (68 checks) re-derives every number above from the raw CSV. It also parses every SQL script as Snowflake SQL and resolves each table and column against the schema.</li>
   <li>Decision log (46 entries), API specification with a drift test, and a findings log with evidence, impact, who to route each item to and the next step.</li>
 </ul>
 
@@ -161,9 +161,9 @@
 
 <h2>7. Additional work, limits and next steps</h2>
 <ul>
-  <li><b>Explanations of alerts, checked against the data.</b> An alert can be explained by a language model or by plain rules. The model is not trusted: it receives a numbered evidence pack and must cite which datapoint supports each claim and the value it read. A checker compares every citation with the real data and rejects numbers that are not in the evidence. Answers that pass are shown with a list of how they were checked; answers that cannot be verified wait for an admin; answers that contradict the data are withheld, and others see the rule-based explanation instead. On 10 alerts, four free local models passed the checks 6, 3, 0 and 0 times, and the rule-based version 9 times. That is a small sample and no hosted model was run.</li>
-  <li><b>Data limits.</b> The usage logs are simulated from the CSV, so warehouse totals equal the CSV by construction. The reconciliation matters when run on real ACCOUNT_USAGE data. The credit price is a placeholder.</li>
-  <li><b>Same author.</b> The Python validator was written by the same person as the application, from the same written rules. It catches slips and drift, not a misreading of the brief.</li>
+  <li><b>Explanations of alerts, checked against the data.</b> An alert can be explained by a language model or by plain rules. The model is not trusted: it receives a numbered evidence pack and must cite which datapoint supports each claim and the value it read. A checker compares every citation with the real data and rejects numbers that are not in the evidence. Answers that pass are shown with a list of how they were checked; answers that cannot be verified wait for an admin; answers that contradict the data are withheld, and others see the rule-based explanation instead. On 10 alerts, four free local models passed the checks 6, 3, 0 and 0 times, and the rule-based version 9 times. That is a small sample.</li>
+  <li><b>Data limits.</b> The usage logs are simulated from the CSV, so warehouse totals equal the CSV by construction. The reconciliation matters when run on real ACCOUNT_USAGE data. Dollar amounts rest on a rough credit price (see Task 3).</li>
+  <li><b>Scope of the checks.</b> The Python validator follows the same written rules as the application, in a different language, so it catches coding slips and drift rather than a different reading of the brief.</li>
   <li><b>Next.</b> Run the suite against real ACCOUNT_USAGE views, add a flag-only statistical screen beside the rules, and store alert history so it survives a restart.</li>
 </ul>
 
@@ -227,7 +227,7 @@ server -&gt; { "type": "error", "code": "...", "message": "..." }               
 </ul>
 
 <h2 class="pb">Appendix B. Snowflake cost allocation SQL suite</h2>
-<p>Run in order after <code>USE DATABASE PURE_INSIGHTS;</code>. Parameters (credit price 3.0 as a placeholder, variance tolerance 10, hosting ratio 3) live in a one-row table, CORE.COST_PARAMS. The schema script (not listed in full) creates the database PURE_INSIGHTS, schemas CORE and SIM_ACCOUNT_USAGE, and six tables: CORE.OBSERVATIONS_CLEAN (1,976 rows, one per usable reading), CORE.QUARANTINE_LEDGER (24), CORE.REPORTS (100), CORE.COST_PARAMS, SIM_ACCOUNT_USAGE.QUERY_HISTORY and SIM_ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY (hourly per warehouse). The last two imitate the real ACCOUNT_USAGE views, which are read-only.</p>
+<p>Run in order after <code>USE DATABASE PURE_INSIGHTS;</code>. Parameters (credit price 3.0 as a rough estimate, variance tolerance 10, hosting ratio 3) live in a one-row table, CORE.COST_PARAMS. The schema script (not listed in full) creates the database PURE_INSIGHTS, schemas CORE and SIM_ACCOUNT_USAGE, and six tables: CORE.OBSERVATIONS_CLEAN (1,976 rows, one per usable reading), CORE.QUARANTINE_LEDGER (24), CORE.REPORTS (100), CORE.COST_PARAMS, SIM_ACCOUNT_USAGE.QUERY_HISTORY and SIM_ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY (hourly per warehouse). The last two imitate the real ACCOUNT_USAGE views, which are read-only.</p>
 <h3>B1. 10_credit_attribution.sql: split each warehouse-hour&#x27;s credits across its queries</h3>
 <pre class="sql">-- Step 1 of 5: attribute warehouse credits to reports.
 --

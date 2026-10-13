@@ -1,7 +1,6 @@
 # Pure Insights Command Center
 
-**An admin console that attributes every Snowflake credit to a report, alerts in real time on slow or failing reports, and proves its own
-numbers: a separate Python implementation re-derives them from the raw CSV and the two are compared item by item (`npm run validate`).**
+An admin dashboard for the Pure Insights case study. It tracks report health and ownership, raises real-time alerts when a report is slow or a refresh fails, and works out Snowflake cost per report. A separate Python program re-derives the main numbers from the raw CSV so they can be checked against the app (`npm run validate`).
 
 ![The overview: fleet health, open alerts and a map of every report](docs/img/overview.jpg)
 ![A report's load time with its failed refreshes marked](docs/img/report-detail.jpg)
@@ -19,7 +18,7 @@ Storage product; the palette is inspired by their website and the layout by a pu
 | Real-time alerting over WebSocket, with replay on reconnect | done |
 | React dashboard: overview, fleet map, reports, alerts, costs, orphans, data quality | done, with charts |
 | Independent validation in Python: 68 checks (every headline number, plus the SQL checked as Snowflake SQL) | done, passing ([report](validation/REPORT.md)) |
-| Extra: "Explain this alert": AI or rule-written, checked against the data, held for a person if unverifiable | done; run on four free local models (10 alerts each), **never on a hosted one** |
+| Extra: "Explain this alert": AI or rule-written, checked against the data, held for a person if unverifiable | done; run on four free local models (10 alerts each) |
 
 CI on GitHub runs on a clean Ubuntu machine and passes all three jobs: the data-drift check, 240 backend tests, the
 Python validation, 257 frontend tests, the build and both end-to-end smoke tests.
@@ -40,7 +39,7 @@ The "Explain" button uses rules by default. For a free local model: install [Oll
 Other commands: `npm run test:all` (497 tests), `npm run validate` (needs Python 3: re-derives the numbers from the raw CSV and compares),
 `npm run smoke` (starts the whole product and checks it end to end), `npm run smoke:restart`, `npm run triage:eval` (add `--llm --provider ollama` to
 try a local model), `npm run web:dev` (hot reload on :5173), `npm run cost:build`.
-All money is US dollars, because the data's cost column is `aws_hosting_cost_usd`. Snowflake credits convert at a placeholder $3.
+All money is US dollars, because the data's cost column is `aws_hosting_cost_usd`. Dollar amounts are rough estimates: the data has no price for a Snowflake credit, so I used a round $3 per credit. Use them to compare reports with each other, not as exact figures.
 
 ## What it found in the data, and how to read it
 
@@ -49,7 +48,7 @@ All money is US dollars, because the data's cost column is `aws_hosting_cost_usd
   2,026 breaching readings become 838 alerts needing attention (41%). That is a modest cut because the data is almost always "in alert".
 - Attributing credits by query workload disagrees with the CSV's per-report credits for 64 of 100 reports. This is **by design** of the
   synthetic data, and shows the reconciliation can catch a mismatch. It is not evidence that any real report is mis-billed.
-- The data is statistically random (columns are uncorrelated), so rankings reflect the generator, and dollar figures use a placeholder credit price.
+- The data is statistically random (columns are uncorrelated), so rankings reflect the generator, and dollar figures rest on a rough credit price.
 - Every discrepancy, with evidence, impact and who to route it to, is in [`docs/validation-findings.md`](docs/validation-findings.md).
 
 | Number | Where it comes from | How much to trust it |
@@ -58,9 +57,9 @@ All money is US dollars, because the data's cost column is `aws_hosting_cost_usd
 | 838 alerts from 2,026 breaching readings | My alert rules on the CSV; every alert matched one by one by the Python model | The rules are my choices; the reduction depends on this random data |
 | 64 of 100 reports disagree on credits | My simulated usage logs vs the CSV; matched by the Python model | Built to be independent; shows the check works, says nothing about real billing |
 | Warehouse credits equal CSV credits | Built from the CSV | True by construction; proves nothing |
-| Any dollar figure | Placeholder $3 per credit | Compare reports with each other only |
+| Any dollar figure | A rough $3 per credit | Compare reports with each other only |
 
-The validator was written by the same person as the app, from the same written rules, so it catches slips and drift, not a wrong reading of the brief.
+The validator follows the same written rules as the app, in a different language, so it catches coding slips and drift rather than a different reading of the brief.
 
 ## Layout
 

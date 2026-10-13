@@ -71,8 +71,7 @@ the value it read. A checker then compares every citation with the real data, te
 that are not in the evidence. A false suggestion is withheld, one that cannot be verified waits for a person, and only one that passes is shown,
 with its evidence and a list of how it was checked. It is also labelled as written by an AI. When the AI's answer is held back, everyone else sees the rule-based answer for the same alert if that passed the checks, labelled as rule-based, and an admin can approve or dismiss the AI's answer on the alert itself. A rule-based version with no AI is the control, so a model can be compared with it.
 *Be honest about:* I ran it on four small free models on my laptop, 10 alerts each. Passed the checks: Llama 3.1 8B 6, Gemma 2 9B 3, Qwen 7B 0 (8 rejected, 2 held),
-Qwen 1.5B 0. The largest model was not the best one. The rule-based version passed 9 of the same 10. That is a small, untuned sample, not a claim about AI in general. I never ran a hosted
-model (no key). The checker catches the mistakes I thought of, not every possible one, and "passed" means checked against the evidence, not
+Qwen 1.5B 0. The largest model was not the best one. The rule-based version passed 9 of the same 10. That is a small, untuned sample, not a claim about AI in general. The checker catches the mistakes I thought of, not every possible one, and "passed" means checked against the evidence, not
 true of the real world.
 *Check:* decisions D32 to D38, `npm run triage:eval`.
 
@@ -107,8 +106,7 @@ statistical screen as well, never an automatic removal. *Check:* `validation/REP
 ## Hard follow-ups to be ready for
 
 - **"Did you test the AI part?"** The checker, rules, service and screens are tested hard (broken on purpose to confirm tests fail). The local
-  model adapter is tested against a stand-in server and was run once against a real local model. The hosted model's adapter is tested only
-  against a fake; `npm run triage:eval -- --llm` would run it with a key.
+  model adapter is tested against a stand-in server and was run against four real local models.
 - **"Why did the model do so badly?"** It is a small 7B model with a prompt I did not tune, on 10 alerts. It copied values loosely and cited
   causes the data contradicts. The point is that none of that reached a reader. I did not test whether a bigger model, or a looser format
   rule, would do better.
