@@ -1,0 +1,48 @@
+﻿CHECK_NAME,SNOWFLAKE_VALUE,APP_VALUE,RESULT
+12 R1: actual value,52.000000000000,0,DIFFERENT
+12 R1: status,FAIL,PASS,DIFFERENT
+13 variance: sum of difference,0.23,0.02,DIFFERENT
+11 unit cost: rows,100,100,MATCH
+11 unit cost: sum of attributed_credits,1206352.67,1206352.48,MATCH
+11 unit cost: sum of aws_cost_usd,455227.87,455227.87,MATCH
+11 unit cost: sum of cost_per_view_usd,278.22,278.22,MATCH
+11 unit cost: sum of credit_cost_usd,3619057.97,3619057.42,MATCH
+11 unit cost: sum of idle_cost_usd,8826.55,8826.57,MATCH
+11 unit cost: sum of total_cost_usd,4074285.84,4074285.29,MATCH
+11 unit cost: sum of total_views,1486905,1486905.00,MATCH
+11 unit cost: top report,RPT_299,RPT_299,MATCH
+11 unit cost: top report total cost,71948.75,71948.79,MATCH
+12 R2: actual value,0.000000000000,0,MATCH
+12 R2: status,PASS,PASS,MATCH
+12 R3: actual value,0.000000000000,0,MATCH
+12 R3: status,PASS,PASS,MATCH
+12 R4: actual value,0.000000000000,0,MATCH
+12 R4: status,PASS,PASS,MATCH
+12 R5: actual value,0.000000000000,0,MATCH
+12 R5: status,PASS,PASS,MATCH
+12 R6: actual value,0.000000000000,0,MATCH
+12 R6: status,PASS,PASS,MATCH
+12 R7: actual value,1206352.667133620000,1206352.48,MATCH
+12 R7: status,INFO,INFO,MATCH
+12 R8: actual value,64.000000000000,64,MATCH
+12 R8: status,FAIL,FAIL,MATCH
+13 variance: reports outside tolerance,64,64,MATCH
+13 variance: rows,100,100,MATCH
+13 variance: sum of attributed_credits,1206352.71,1206352.50,MATCH
+13 variance: sum of reported_credits,1206352.48,1206352.48,MATCH
+14 AWS mismatch: COST_HIGH_FOR_USAGE,322,322,MATCH
+14 AWS mismatch: COST_LOW_FOR_USAGE,299,299,MATCH
+14 AWS mismatch: ZERO_VIEWS_WITH_COST,4,4,MATCH
+14 AWS mismatch: flagged readings,625,625,MATCH
+14 AWS mismatch: sum of aws_cost_usd,112678.44,112678.44,MATCH
+14 AWS mismatch: sum of excess_aws_usd,-2999.46,-2999.46,MATCH
+14 AWS mismatch: sum of expected_aws_usd,115677.90,115677.90,MATCH
+attributed credits in total,1206352.67,1206352.48,MATCH
+attribution rows,1976,1976,MATCH
+rows loaded: CORE.OBSERVATIONS_CLEAN,1976,1976,MATCH
+rows loaded: CORE.QUARANTINE_LEDGER,24,24,MATCH
+rows loaded: CORE.REPORTS,100,100,MATCH
+rows loaded: SIM_ACCOUNT_USAGE.QUERY_HISTORY,1976,1976,MATCH
+rows loaded: SIM_ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY,80,80,MATCH
+Snowflake region,AWS_AP_SOUTHEAST_7,-,INFO
+Snowflake version,10.37.100,-,INFO

@@ -15,7 +15,7 @@
 -- verdict: AWS compute scales with concurrency and data volume as well as views, and a single observation is noisy.
 
 WITH fleet AS (
-  SELECT SUM(aws_hosting_cost_usd) * 1.0 / SUM(monthly_active_views) AS aws_per_view
+  SELECT CAST(SUM(aws_hosting_cost_usd) AS DOUBLE) / SUM(monthly_active_views) AS aws_per_view
   FROM core.observations_clean
   WHERE monthly_active_views > 0
 ),

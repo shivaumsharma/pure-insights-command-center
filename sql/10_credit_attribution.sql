@@ -46,7 +46,9 @@ shares AS (
 attributed AS (
   SELECT
     s.*,
-    CASE WHEN s.window_elapsed_ms > 0 THEN s.elapsed_ms * 1.0 / s.window_elapsed_ms ELSE 0 END AS workload_share
+    -- DOUBLE on purpose: Snowflake keeps only a limited number of decimal places when it divides exact numbers, which left shares slightly
+    -- off and made check R1 fail in 52 of 80 warehouse-hours on a first run on Snowflake. Floating point balances to well under 1e-6.
+    CASE WHEN s.window_elapsed_ms > 0 THEN CAST(s.elapsed_ms AS DOUBLE) / s.window_elapsed_ms ELSE 0 END AS workload_share
   FROM shares s
 )
 SELECT
