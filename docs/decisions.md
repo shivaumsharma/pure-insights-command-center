@@ -73,7 +73,7 @@ into in-memory SQLite (Node's built-in `node:sqlite`, no dependency) under the s
 numbers without a Snowflake account. To stay portable the scripts use only CTEs, window functions, range joins and
 `COALESCE/ROUND/REPLACE/ABS`; a test bans the common dialect-specific constructs.
 Limits, stated plainly:
-- **The SQL has never run on real Snowflake.** Portability is by construction and by lint, not by execution.
+- **Portability was first by construction and by lint, not by execution.** The suite has since been run on a real Snowflake trial account (D47), which found one precision problem that the local engine could not show.
 - **SQLite returns NULL for division by zero; Snowflake raises an error.** The zero-view guard in `11_unit_cost.sql`
   therefore cannot be tested locally: removing it changes nothing here (a mutation check confirmed this). Review it by eye.
 - Booleans are stored as 0/1 locally, so no script compares a boolean column; they compare the underlying numbers.
@@ -459,7 +459,7 @@ each caught by this check on its own with a message that names the problem.
 **What it does not show.** It runs nothing. It cannot show that Snowflake accepts every function and type as the parser does, or that the results
 are right. The parser is lenient: it accepted an empty `PARTITION BY`, which is not valid, so a pass means "no typos, mismatches or malformed structure
 that the parser can see", not "valid on Snowflake". The honest claim is: written in a portable subset, tested on SQLite with hand-worked fixtures,
-re-derived independently in Python, checked statically as Snowflake SQL, and never run on Snowflake.
+re-derived independently in Python and checked statically as Snowflake SQL. (It was later run on Snowflake; see D47.)
 
 ### D45. Showing the hosting-cost discrepancy, and explaining the checks in plain words
 Two things I added after looking at the Costs page.
@@ -481,7 +481,7 @@ Checked: 17 deliberate breakages of the new code (scales, line clipping, mark si
 paging, its role check, its documentation); one survived at first because the test fixture was symmetric, and was fixed.
 
 ## Open assumptions (to confirm in later phases)
-- `sql/00_schema.sql` and `sql/10-14*.sql` have not been run against a live Snowflake account.
+- `sql/00_schema.sql` and `sql/10-14*.sql` were run on a Snowflake trial account (D47). They have not been run on real `ACCOUNT_USAGE` views, only on the simulated tables.
 - `credit_price_usd`, `variance_tolerance_pct` (10) and `aws_mismatch_ratio` (3) are placeholders, not agreed business values.
 
 ### D46. Explanations are decided and read where they are asked for
@@ -499,3 +499,15 @@ others fewer), which leaves a viewer with nothing and an admin with a detour. Ch
 - **The review page leads with "Needs your decision"**, then "How the AI is doing". When nothing is waiting it links to Alerts.
 Checked: 13 backend tests and 12 frontend tests added; 8 deliberate breakages of the stand-in and checklist logic (who sees what, when the stand-in applies) were each caught; 14 deliberate breakages of the new frontend code (gating, note, open/closed, timer, hint, evidence, link,
 icons) were each caught by a test, after tests were strengthened for four that first survived (the evidence tooltip, a closed summary when all pass, distinct symbols, buttons for non-admins).
+
+### D47. The suite was run on Snowflake, and the first run found a bug
+I ran the whole suite on a Snowflake trial account (version 10.37.100, AWS Asia Pacific Southeast 7) on 14 October 2026: create the schema, load the five generated files, run
+scripts 10 to 14, then compare 45 values with what the application computes locally (row counts, column totals, statuses). Method: `scripts/snowflake_run.py --bundle`
+writes one SQL file that does all of it inside a worksheet; the last result grid is saved as CSV and read back with `--from-csv`.
+- **First run: 42 matched, 3 differed.** Check R1 (attributed credits equal metered credits in every warehouse-hour) failed in 52 of 80 hours, and two sums were off by
+  about 0.19 credits in 1.2 million. Cause: the workload share was `elapsed_ms * 1.0 / window_elapsed_ms`, an exact-decimal division, and Snowflake keeps only a limited
+  number of decimal places for that. SQLite divides in floating point, so no local test could show it. Evidence: `validation/snowflake_run_1_before_fix.csv`.
+- **Fix:** the share and the fleet hosting rate are now divided in DOUBLE (`CAST(... AS DOUBLE)`), which is portable. Two tests keep it that way and fail without the fix.
+- **Second run: 45 of 45 matched**, R1 passes, R8 still fails on 64 reports as designed. Evidence: `validation/snowflake_run_2_after_fix.csv`.
+- **What this does and does not show.** The scripts run on Snowflake and give the same numbers as the local engine and the Python re-derivation. The usage logs are still the
+  simulated tables built from the CSV, not real `ACCOUNT_USAGE` views, and the comparison is against my own local outputs.

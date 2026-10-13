@@ -53,7 +53,9 @@ protocol (first-message auth, heartbeat, close codes) and because the brief name
 SSE would have given me.
 
 ## 9. What would change with a real Snowflake account?
-I never ran the SQL on real Snowflake; it runs on a local SQLite stand-in, written in the portable subset. Real usage views have their own
+I ran the suite on a Snowflake trial account and compared 45 values with my local outputs. The first run found a real bug: exact-decimal division on Snowflake keeps too few
+decimal places, so check R1 failed in 52 of 80 hours. SQLite divides in floating point, which is why my local tests missed it. I changed the division to DOUBLE and added tests;
+the second run matched everywhere. What I have not done is run it on real `ACCOUNT_USAGE` views. Those have their own
 delays and column details that I would need to check, and per-query attribution would use real query tags instead of my simulated table. The
 divide-by-zero guard is the one thing I could not test locally, because SQLite returns NULL where Snowflake raises an error.
 *Check:* decision D9. (Verify any claim about real Snowflake's behaviour before you state it.)

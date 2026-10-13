@@ -130,6 +130,6 @@ Alerts each cause was found on (an alert can have several): HIGH_CONCURRENCY 203
 
 - It shows the app's numbers can be reproduced from the raw file by a second, separate implementation, to the last digit where the data is exact.
 - It was written by the same person as the app, from the same written rules, so it catches slips and drift, **not a wrong reading of the brief**.
-- The SQL suite was compared through its SQLite stand-in and checked statically as Snowflake SQL (section 7). **It has never been run on a real Snowflake account.**
+- The SQL suite was compared through its SQLite stand-in and checked statically as Snowflake SQL (section 7). It was also run on a Snowflake trial account (see `docs/snowflake-run.md`), on the simulated usage tables rather than real `ACCOUNT_USAGE` views.
 - Credit price is a placeholder ($3), so dollar totals are illustrative; the checks cover credits, ratios and rankings.
 - The data is synthetic and statistically random, so what is "expensive" or "slow" reflects the generator, not any real report.

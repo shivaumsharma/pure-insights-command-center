@@ -1,16 +1,20 @@
 # Running the SQL suite on a real Snowflake account
 
-**Status: written, not yet run.** The cost scripts in `sql/` are kept to portable SQL and run unchanged on a local SQLite stand-in, where they are
-tested (`backend/test/cost-sql.test.js`, `cost-real.test.js`) and checked against an independent Python re-derivation (`npm run validate`).
-They have **never been run on Snowflake**. This page is how to do that in about 20 minutes and what the answers should be. If a script fails,
-that is a finding: record the error in `docs/validation-findings.md` rather than hiding it.
+**Status: run on 14 October 2026 on a Snowflake trial account (version 10.37.100, AWS Asia Pacific Southeast 7).** All 45 comparisons with the application's numbers match.
+The first run found a precision problem (52 of 80 warehouse-hours failed check R1) caused by exact-decimal division on Snowflake. The scripts now divide in DOUBLE, and the
+second run matched everywhere. Both result grids are kept: `validation/snowflake_run_1_before_fix.csv` and `validation/snowflake_run_2_after_fix.csv` (decision D47).
 
-A free trial account is enough (Snowflake offers one; check its current terms and region options). Use the web interface (Snowsight) so nothing
-needs installing.
+The scripts are kept to portable SQL and also run unchanged on a local SQLite stand-in, where they are tested (`backend/test/cost-sql.test.js`, `cost-real.test.js`) and checked
+against an independent Python re-derivation (`npm run validate`). What was run on Snowflake is the simulated usage tables built from the CSV, not real `ACCOUNT_USAGE` views.
 
-**No account?** My own trial had expired when this project was finished, so the suite has not been run there. What was done instead is a
-static check: `npm run validate` parses every script as Snowflake SQL, looks up every table and column in the schema, and matches each CSV to its
-table (`validation/sql_static.py`). That catches typos and loading mismatches; it does not run anything and does not show the results are right.
+## The quick way (about 3 minutes)
+
+1. `npm run data:build` and `npm run cost:build`, then `python scripts/snowflake_run.py --bundle snowflake_run.sql --warehouse YOUR_WAREHOUSE`.
+2. In Snowsight, Workspaces, **Add new, Upload files**: choose `snowflake_run.sql`. Open it, use the arrow next to Run and choose **Run all**.
+3. The last result is a table of comparisons (`MATCH` or `DIFFERENT`). Download it as CSV and run `python scripts/snowflake_run.py --from-csv THAT.csv`.
+
+With the Snowflake Python connector installed and credentials in environment variables, `python scripts/snowflake_run.py` does all of it from a terminal (see the top of that file).
+The manual route below is the same thing done by hand.
 
 ## 1. Create the objects
 
@@ -59,4 +63,4 @@ finding about Snowflake's SQL dialect (rounding, window frames, timestamp handli
 ## 4. What to keep as evidence
 
 A screenshot of each result, and the worksheet's **Query History** showing the runs. Add what you found, pass or fail, to
-`docs/validation-findings.md` and change the "never run on a real Snowflake account" lines in the README and brief map to say what actually happened.
+`docs/validation-findings.md`.

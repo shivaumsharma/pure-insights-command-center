@@ -1,7 +1,7 @@
 -- Phase 1: Snowflake schema for the clean store and the simulated ACCOUNT_USAGE tables.
 --
--- STATUS: written in standard Snowflake SQL but NOT executed against a live Snowflake account.
--- The test suite exercises the same logic in Node; treat this file as unverified until it is run.
+-- STATUS: run on a Snowflake trial account on 2026-10-14 (see docs/snowflake-run.md and decision D47).
+-- The test suite also exercises the same logic locally in Node on a SQLite stand-in.
 --
 -- Real SNOWFLAKE.ACCOUNT_USAGE views are read-only, so the simulated copies live in their own schema.
 -- See docs/decisions.md (D5) for how they are derived and what their totals do and do not prove.

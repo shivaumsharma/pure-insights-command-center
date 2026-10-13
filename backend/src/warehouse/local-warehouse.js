@@ -3,8 +3,8 @@
 // by the backend without a Snowflake account.
 //
 // Limits to keep in mind: SQLite is not Snowflake. The sql/ scripts are deliberately limited to the portable
-// subset (CTEs, window functions, range joins, COALESCE/ROUND/REPLACE), but they have never been run on real
-// Snowflake in this repo. See docs/decisions.md (D9).
+// subset (CTEs, window functions, range joins, COALESCE/ROUND/REPLACE). They were also run on a Snowflake trial account, which found a
+// precision difference SQLite hides (exact-decimal division): see docs/decisions.md (D9, D47).
 
 import fs from 'node:fs';
 import path from 'node:path';

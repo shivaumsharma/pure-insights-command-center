@@ -1,0 +1,289 @@
+{
+  "ran_at_utc": "2026-10-13T18:37:05Z",
+  "checks": [
+    {
+      "check_name": "11 unit cost: rows",
+      "snowflake_value": "100",
+      "app_value": "100",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "11 unit cost: sum of attributed_credits",
+      "snowflake_value": "1206352.48",
+      "app_value": "1206352.48",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "11 unit cost: sum of aws_cost_usd",
+      "snowflake_value": "455227.87",
+      "app_value": "455227.87",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "11 unit cost: sum of cost_per_view_usd",
+      "snowflake_value": "278.22",
+      "app_value": "278.22",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "11 unit cost: sum of credit_cost_usd",
+      "snowflake_value": "3619057.42",
+      "app_value": "3619057.42",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "11 unit cost: sum of idle_cost_usd",
+      "snowflake_value": "8826.57",
+      "app_value": "8826.57",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "11 unit cost: sum of total_cost_usd",
+      "snowflake_value": "4074285.29",
+      "app_value": "4074285.29",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "11 unit cost: sum of total_views",
+      "snowflake_value": "1486905",
+      "app_value": "1486905.00",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "11 unit cost: top report",
+      "snowflake_value": "RPT_299",
+      "app_value": "RPT_299",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "11 unit cost: top report total cost",
+      "snowflake_value": "71948.79",
+      "app_value": "71948.79",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "12 R1: actual value",
+      "snowflake_value": "0",
+      "app_value": "0",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "12 R1: status",
+      "snowflake_value": "PASS",
+      "app_value": "PASS",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "12 R2: actual value",
+      "snowflake_value": "0",
+      "app_value": "0",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "12 R2: status",
+      "snowflake_value": "PASS",
+      "app_value": "PASS",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "12 R3: actual value",
+      "snowflake_value": "0",
+      "app_value": "0",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "12 R3: status",
+      "snowflake_value": "PASS",
+      "app_value": "PASS",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "12 R4: actual value",
+      "snowflake_value": "0",
+      "app_value": "0",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "12 R4: status",
+      "snowflake_value": "PASS",
+      "app_value": "PASS",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "12 R5: actual value",
+      "snowflake_value": "0",
+      "app_value": "0",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "12 R5: status",
+      "snowflake_value": "PASS",
+      "app_value": "PASS",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "12 R6: actual value",
+      "snowflake_value": "0",
+      "app_value": "0",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "12 R6: status",
+      "snowflake_value": "PASS",
+      "app_value": "PASS",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "12 R7: actual value",
+      "snowflake_value": "1206352.48",
+      "app_value": "1206352.48",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "12 R7: status",
+      "snowflake_value": "INFO",
+      "app_value": "INFO",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "12 R8: actual value",
+      "snowflake_value": "64",
+      "app_value": "64",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "12 R8: status",
+      "snowflake_value": "FAIL",
+      "app_value": "FAIL",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "13 variance: reports outside tolerance",
+      "snowflake_value": "64",
+      "app_value": "64",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "13 variance: rows",
+      "snowflake_value": "100",
+      "app_value": "100",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "13 variance: sum of attributed_credits",
+      "snowflake_value": "1206352.5",
+      "app_value": "1206352.50",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "13 variance: sum of difference",
+      "snowflake_value": "0.02",
+      "app_value": "0.02",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "13 variance: sum of reported_credits",
+      "snowflake_value": "1206352.48",
+      "app_value": "1206352.48",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "14 AWS mismatch: COST_HIGH_FOR_USAGE",
+      "snowflake_value": "322",
+      "app_value": "322",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "14 AWS mismatch: COST_LOW_FOR_USAGE",
+      "snowflake_value": "299",
+      "app_value": "299",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "14 AWS mismatch: ZERO_VIEWS_WITH_COST",
+      "snowflake_value": "4",
+      "app_value": "4",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "14 AWS mismatch: flagged readings",
+      "snowflake_value": "625",
+      "app_value": "625",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "14 AWS mismatch: sum of aws_cost_usd",
+      "snowflake_value": "112678.44",
+      "app_value": "112678.44",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "14 AWS mismatch: sum of excess_aws_usd",
+      "snowflake_value": "-2999.46",
+      "app_value": "-2999.46",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "14 AWS mismatch: sum of expected_aws_usd",
+      "snowflake_value": "115677.9",
+      "app_value": "115677.90",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "attributed credits in total",
+      "snowflake_value": "1206352.48",
+      "app_value": "1206352.48",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "attribution rows",
+      "snowflake_value": "1976",
+      "app_value": "1976",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "rows loaded: CORE.OBSERVATIONS_CLEAN",
+      "snowflake_value": "1976",
+      "app_value": "1976",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "rows loaded: CORE.QUARANTINE_LEDGER",
+      "snowflake_value": "24",
+      "app_value": "24",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "rows loaded: CORE.REPORTS",
+      "snowflake_value": "100",
+      "app_value": "100",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "rows loaded: SIM_ACCOUNT_USAGE.QUERY_HISTORY",
+      "snowflake_value": "1976",
+      "app_value": "1976",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "rows loaded: SIM_ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY",
+      "snowflake_value": "80",
+      "app_value": "80",
+      "result": "MATCH"
+    },
+    {
+      "check_name": "Snowflake region",
+      "snowflake_value": "AWS_AP_SOUTHEAST_7",
+      "app_value": "-",
+      "result": "INFO"
+    },
+    {
+      "check_name": "Snowflake version",
+      "snowflake_value": "10.37.100",
+      "app_value": "-",
+      "result": "INFO"
+    }
+  ],
+  "matched": 45,
+  "different": 0
+}

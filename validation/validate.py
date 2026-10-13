@@ -16,8 +16,8 @@ What it covers, in the order the data flows:
                     (needs `pip install -r validation/requirements.txt`; skipped with a note if sqlglot is absent, required when REQUIRE_SQLGLOT=1)
 
 What it does NOT show: it was written by the same person as the code, from the same written rules (docs/decisions.md), so it catches
-slips and drift, not a wrong reading of the brief. The SQL was compared through its SQLite stand-in and checked statically as Snowflake SQL, but
-never run on a real Snowflake account.
+slips and drift, not a wrong reading of the brief. The SQL was compared through its SQLite stand-in and checked statically as Snowflake SQL. It was also run on a Snowflake
+trial account (see docs/snowflake-run.md); that run used the simulated usage tables, not real ACCOUNT_USAGE views.
 """
 import csv
 import json
@@ -511,7 +511,7 @@ def write_report(R, counts):
               '## What this does and does not show', '',
               '- It shows the app\'s numbers can be reproduced from the raw file by a second, separate implementation, to the last digit where the data is exact.',
               '- It was written by the same person as the app, from the same written rules, so it catches slips and drift, **not a wrong reading of the brief**.',
-              '- The SQL suite was compared through its SQLite stand-in and checked statically as Snowflake SQL (section 7). **It has never been run on a real Snowflake account.**',
+              '- The SQL suite was compared through its SQLite stand-in and checked statically as Snowflake SQL (section 7). It was also run on a Snowflake trial account (see `docs/snowflake-run.md`), on the simulated usage tables rather than real `ACCOUNT_USAGE` views.',
               '- Credit price is a placeholder ($3), so dollar totals are illustrative; the checks cover credits, ratios and rankings.',
               '- The data is synthetic and statistically random, so what is "expensive" or "slow" reflects the generator, not any real report.', '']
     OUT.write_text('\n'.join(lines), encoding='utf-8', newline='\n')

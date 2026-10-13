@@ -36,7 +36,7 @@ wrong README numbers. All 13 were caught. For the SQL check I misspelt a column,
 - The author is the same person as the author of the code, working from the same written rules (`docs/decisions.md`). It catches slips and drift
   between two implementations. **It does not catch a wrong reading of the brief.**
 - The SQL was compared through its SQLite stand-in and **checked statically as Snowflake SQL** (the parser is `sqlglot`, which is lenient: it accepts some
-  invalid SQL, for example an empty `PARTITION BY`). That finds typos and mismatches. **It has never been run on a real Snowflake account**, so it cannot show
-  that Snowflake accepts every function and type, or that the results match. A reader who has an account can follow `docs/snowflake-run.md`.
+  invalid SQL, for example an empty `PARTITION BY`). That finds typos and mismatches. That check alone cannot show that Snowflake accepts every function and type. The suite was therefore also run on a Snowflake trial account (`docs/snowflake-run.md`):
+  all 45 comparisons match after one precision bug found by that run was fixed.
 - The credit price is a placeholder ($3), so the checks cover credits, ratios and rankings rather than dollar totals.
 - The data is synthetic and statistically random, so "expensive" and "slow" reflect how it was generated.

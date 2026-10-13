@@ -5,6 +5,7 @@
 
 Needs Microsoft Edge (or set EDGE to a Chromium executable) to print the PDF.
 """
+import datetime as dt
 import html
 import json
 import os
@@ -40,6 +41,22 @@ def num(n):
     return f'{n:,}' if isinstance(n, int) else f'{n:,.2f}'
 
 
+def first_run_paragraph():
+    path = os.path.join(ROOT, 'validation', 'snowflake_run_1_before_fix.csv')
+    if not os.path.exists(path):
+        return ''
+    import csv
+    rows = list(csv.DictReader(open(path, encoding='utf8')))
+    bad = [x for x in rows if x['RESULT'] == 'DIFFERENT']
+    ok = [x for x in rows if x['RESULT'] == 'MATCH']
+    if not bad:
+        return ''
+    return (f'<p><b>The first run found a bug.</b> {len(ok)} comparisons matched and {len(bad)} did not. Check R1 (attributed credits equal metered credits in every warehouse-hour) '
+            'failed in 52 of 80 hours on Snowflake, and two totals were off by about 0.19 credits out of 1.2 million. The cause was how the workload share was calculated: '
+            'dividing exact decimals keeps only a limited number of decimal places on Snowflake, while the local SQLite engine divides in floating point, so none of my local tests could show it. '
+            'I changed the division to DOUBLE, added tests that fail without the change, and ran the suite again.</p>')
+
+
 def snowflake_section_from_checks(r):
     by = {c['check_name']: c for c in r['checks']}
     total = r['matched'] + r['different']
@@ -51,13 +68,15 @@ def snowflake_section_from_checks(r):
     else:
         bad = ', '.join(html.escape(c['check_name']) for c in r['checks'] if c['result'] == 'DIFFERENT')
         verdict = f'{r["matched"]} of {total} comparisons matched. These differ: {bad}.'
+    day = dt.datetime.fromisoformat(r['ran_at_utc'].replace('Z', '+00:00')).astimezone().strftime('%d %B %Y').lstrip('0')
     return f"""<h3>Run on Snowflake</h3>
-<p>I ran the suite on a Snowflake account (version {html.escape(version)}, region {html.escape(region)}) on {r["ran_at_utc"][:10]}. The schema script created the database and tables, the five generated data files were loaded, the five scripts were run in order, and each result was compared with what the application computed locally (row counts, column totals, statuses). {verdict}</p>
+{first_run_paragraph()}
+<p>I ran the suite on a Snowflake trial account (version {html.escape(version)}, region {html.escape(region)}) on {day}. The schema script created the database and tables, the five generated data files were loaded, the five scripts were run in order, and each result was compared with what the application computed locally (row counts, column totals, statuses). {verdict}</p>
 <table>
   <tr><th>Compared</th><th style="width:18%">Snowflake</th><th style="width:18%">Application</th><th style="width:12%">Result</th></tr>
   {rows}
 </table>
-<p class="small">The remaining {total - len(shown)} comparisons are column totals for the unit-cost, variance and hosting-cost outputs.</p>"""
+<p class="small">The remaining {total - len(shown)} comparisons are column totals for the unit-cost, variance and hosting-cost outputs. The run used the simulated usage tables built from the CSV, not real ACCOUNT_USAGE views.</p>"""
 
 
 def snowflake_section():

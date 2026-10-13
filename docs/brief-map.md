@@ -22,14 +22,14 @@ Status is only "done" when there is code and a test or a reproducible command be
 | D4 | Active users vs AWS hosting cost discrepancies | `sql/14_views_vs_aws_cost.sql` (625 flagged; see D13); on the Costs page (admin): a chart of every reading's hosting cost against its views with the fleet average and the 3x band, and a table of the flagged readings; `GET /api/costs/aws-usage` and `/aws-mismatch` | `cost-real.test.js`, `aws-usage.test.js`; the chart's points are re-derived in `validation/REPORT.md` | done |
 | R1 | Deliverable: runnable full-stack codebase on GitHub | this repo | `npm run test:all`, `npm run smoke`, `npm start`; CI workflow; first run on GitHub (Ubuntu, 2026-10-13) passed all three jobs | done |
 | R2 | Deliverable: REST and WebSocket specification | `docs/api-spec.md` (REST, alert endpoints, WebSocket protocol, close codes, reconnect rules) | `api-spec.test.js`: the documented endpoints and the code's routes are identical, and each answers on a live server | done |
-| R3 | Deliverable: Snowflake cost allocation SQL script suite | `sql/00_schema.sql`, `sql/10-14` | `npm run cost:build`; matches a Python re-derivation (`npm run validate`); run guide in `docs/snowflake-run.md` | done, **never run on real Snowflake** |
+| R3 | Deliverable: Snowflake cost allocation SQL script suite | `sql/00_schema.sql`, `sql/10-14` | `npm run cost:build`; matches a Python re-derivation (`npm run validate`); run guide in `docs/snowflake-run.md` | done; run on Snowflake (trial account, 2026-10-14): 45 of 45 comparisons match; the first run found a precision bug, now fixed (`validation/snowflake_run_*.csv`) |
 
 ## Beyond the brief
 
 | # | Addition | Why | Where | Status |
 |---|---|---|---|---|
 | E1 | AI explanations of alerts, validated against the data, with a human-review queue | The role is about validating AI output (decision D32) | `backend/src/triage/`, `frontend/src/pages/AiReview.jsx` | built and tested; run on a local 7B model (10 alerts) |
-| E3 | Independent Python validation of every headline number, a findings log, and a Snowflake run guide | The role is about independently rerunning analytics and documenting discrepancies (decision D40) | `validation/`, `docs/validation-findings.md`, `docs/snowflake-run.md` | built; 68 checks pass; the SQL is checked statically as Snowflake SQL, but the Snowflake run itself is **not done** |
+| E3 | Independent Python validation of every headline number, a findings log, and a Snowflake run guide | The role is about independently rerunning analytics and documenting discrepancies (decision D40) | `validation/`, `docs/validation-findings.md`, `docs/snowflake-run.md` | built; 68 checks pass; the SQL is checked statically as Snowflake SQL, but run on a Snowflake trial account, 45 of 45 comparisons match |
 | E2 | Charts and a more visual interface: rings, bars, line, scatter, fleet map | A command center is read at a glance (decision D39) | `frontend/src/components/charts/`, `docs/design-system.md` | built and tested; presentation of existing data, no backend change |
 
 ## Evaluator rubric headings
@@ -39,7 +39,7 @@ Status is only "done" when there is code and a test or a reproducible command be
 | Full-stack web architecture | Tiered design (`architecture.md`); API with RBAC; React app served from the same origin with a strict CSP |
 | Real-time alerting and telemetry | Engine, hub, replay and reconnect tested; live feed in the dashboard verified in a real browser |
 | Cloud cost SQL attribution | Done and independently verified (Python re-implementation matches) |
-| Code quality and system docs | 497 tests (240 backend, 257 frontend), both mutation-checked, plus 68 independent Python checks; decision log D1-D46; README, spec and design docs |
+| Code quality and system docs | 499 tests (242 backend, 257 frontend), both mutation-checked, plus 68 independent Python checks; decision log D1-D47; README, spec and design docs |
 
 ## Disqualifiers and rules
 

@@ -51,7 +51,8 @@
   <tr><td>Credits attributed to the 100 reports (equal to metered credits in every warehouse-hour)</td><td>1,206,352.48</td></tr>
   <tr><td>Reports whose CSV credits differ from query-based attribution by more than 10%</td><td>64 of 100</td></tr>
   <tr><td>Readings whose AWS hosting cost is 3 times or more away from what their views predict</td><td>625 (31.6%)</td></tr>
-  <tr><td>Automated tests / independent Python checks</td><td>497 / 68, all passing</td></tr>
+  <tr><td>Automated tests (all passing) / separate Python checks</td><td>499 / 68</td></tr>
+  <tr><td>SQL suite run on Snowflake, compared with the application's numbers</td><td>45 of 45 match (the first run found a precision bug, now fixed)</td></tr>
 </table>
 <div class="two">
   <div><img src="../docs/img/overview.jpg" alt="Overview page"><div class="cap">Overview page: fleet health, open alerts and a map of every report.</div></div>
@@ -138,7 +139,7 @@
 <p>R8 fails because the supplied data was generated so that each report's credits are independent of its query workload. It shows that the reconciliation can catch a disagreement; it is not evidence that any real report is mis-billed. The largest gap is RPT_299: the CSV claims 7,795.11 credits and the query logs imply 22,391.93.</p>
 <h3>Code quality and system docs</h3>
 <ul>
-  <li>497 automated tests (240 back end, 257 front end). The tests were mutation-checked: I broke the code deliberately in throwaway copies and confirmed a test failed each time. One case, removing a divide-by-zero guard, cannot be detected on the local engine and is recorded as such.</li>
+  <li>499 automated tests (242 back end, 257 front end). The tests were mutation-checked: I broke the code deliberately in throwaway copies and confirmed a test failed each time. One case, removing a divide-by-zero guard, cannot be detected on the local engine and is recorded as such.</li>
   <li>GitHub Actions runs the data drift check, all tests, the build, the Python validation and two end-to-end runs that start the whole product, on a clean machine.</li>
   <li>The separate Python validation (68 checks) re-derives every number above from the raw CSV. It also parses every SQL script as Snowflake SQL and resolves each table and column against the schema.</li>
   <li>Decision log (46 entries), API specification with a drift test, and a findings log with evidence, impact, who to route each item to and the next step.</li>
@@ -155,13 +156,14 @@
   <tr><td>6</td><td>91 readings have more peak concurrent users than monthly views.</td><td>The two measures cannot both be right, or they cover different windows.</td><td>Analytics owner</td><td>Document each column's window.</td></tr>
   <tr><td>7</td><td>625 readings have hosting cost 3x or more away from what their views predict; 4 have cost but no views.</td><td>A prompt to investigate, not a verdict; hosting also scales with concurrency and data volume.</td><td>Cloud platform / FinOps</td><td>Agree a tolerance that fits how hosting is billed.</td></tr>
   <tr><td>8</td><td>64 of 100 reports claim credits more than 10% from what query workload implies.</td><td>In this data the two are unrelated by construction.</td><td>FinOps</td><td>Rerun on real ACCOUNT_USAGE data, where this check matters.</td></tr>
-  <tr><td>9</td><td>The CSV has no timestamps and its columns are uncorrelated.</td><td>Alert order rests on a synthetic timeline; rankings reflect how the data was generated.</td><td>Data engineering</td><td>Provide a reading time per row; do not draw business conclusions from rankings.</td></tr>
+  <tr><td>9</td><td>A first run on Snowflake failed check R1 in 52 of 80 warehouse-hours.</td><td>Exact-decimal division loses precision on Snowflake; credits were off by about 0.19 in 1.2 million. Not visible on the local engine.</td><td>Whoever maintains the SQL</td><td>Fixed (division in DOUBLE), guarded by tests, rerun matched. Rerun after any change to the share formula.</td></tr>
+  <tr><td>10</td><td>The CSV has no timestamps and its columns are uncorrelated.</td><td>Alert order rests on a synthetic timeline; rankings reflect how the data was generated.</td><td>Data engineering</td><td>Provide a reading time per row; do not draw business conclusions from rankings.</td></tr>
 </table>
 
 <h2>7. Additional work, limits and next steps</h2>
 <ul>
   <li><b>Explanations of alerts, checked against the data.</b> An alert can be explained by a language model or by plain rules. The model is not trusted: it receives a numbered evidence pack and must cite which datapoint supports each claim and the value it read. A checker compares every citation with the real data and rejects numbers that are not in the evidence. Answers that pass are shown with a list of how they were checked; answers that cannot be verified wait for an admin; answers that contradict the data are withheld, and others see the rule-based explanation instead. On 10 alerts, four free local models passed the checks 6, 3, 0 and 0 times, and the rule-based version 9 times. That is a small sample.</li>
-  <li><b>Data limits.</b> The usage logs are simulated from the CSV, so warehouse totals equal the CSV by construction. The reconciliation matters when run on real ACCOUNT_USAGE data. Dollar amounts rest on a rough credit price (see Task 3).</li>
+  <li><b>Data limits.</b> The usage logs are simulated from the CSV, so warehouse totals equal the CSV by construction. The Snowflake run above used these simulated tables, so the reconciliation still matters on real ACCOUNT_USAGE views. Dollar amounts rest on a rough credit price (see Task 3).</li>
   <li><b>Scope of the checks.</b> The Python validator follows the same written rules as the application, in a different language, so it catches coding slips and drift rather than a different reading of the brief.</li>
   <li><b>Next.</b> Run the suite against real ACCOUNT_USAGE views, add a flag-only statistical screen beside the rules, and store alert history so it survives a restart.</li>
 </ul>
